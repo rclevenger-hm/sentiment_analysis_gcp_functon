@@ -1,0 +1,41 @@
+{
+  "name": "sentiment-analysis-gcp-function",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated Google Cloud functions feedback analysis and reporting",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "lint": "node scripts/lint.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "functions-framework --target=sentimentApi",
+    "client": "node scripts/cli.mjs",
+    "smoke": "node scripts/smoke-test.mjs",
+    "gcp-build": ""
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "9.3.1",
+    "@google-cloud/functions-framework": "5.0.5",
+    "@google-cloud/language": "8.1.1",
+    "@google-cloud/pubsub": "6.1.0",
+    "@google-cloud/storage": "8.2.0",
+    "google-auth-library": "11.1.0",
+    "jose": "6.2.12"
+  },
+  "devDependencies": {
+    "acorn": "8.19.0",
+    "esbuild": "0.28.2",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "cloudevents": {
+      "uuid": "11.1.1"
+    },
+    "gaxios": {
+      "uuid": "11.1.1"
+    }
+  }
+}
