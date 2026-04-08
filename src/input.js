@@ -33,3 +33,8 @@ function decodeBody(event) {
   try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
   catch { throw invalid('Request body must be valid UTF-8'); }
 }
+
+function parseJson(text) {
+  try { const value = JSON.parse(text); if (!object(value)) throw invalid('Request body must be a JSON object'); return value; }
+  catch (error) { if (error instanceof HttpError) throw error; throw invalid('Request body must contain valid JSON'); }
+}
