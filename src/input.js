@@ -143,3 +143,5 @@ function tenantFrom(event) {
   }
   return hash(`${identity.issuer}:${identity.subject}`);
 }
+
+module.exports = { MAX_REQUEST_BYTES, MAX_TEXT_BYTES, MAX_RECORDS, LANGUAGES, TARGETED_LANGUAGES, HttpError, invalid, hash, object, header, decodeBody, parseJson, validateText, parseCsv, parseBulk, dateOnly, tenantFrom };
