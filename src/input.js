@@ -38,3 +38,13 @@ function parseJson(text) {
   try { const value = JSON.parse(text); if (!object(value)) throw invalid('Request body must be a JSON object'); return value; }
   catch (error) { if (error instanceof HttpError) throw error; throw invalid('Request body must contain valid JSON'); }
 }
+
+function validateText(value) {
+  if (!object(value)) throw invalid('Each record must be an object');
+  if (typeof value.text !== 'string' || !value.text.trim()) throw invalid('text must be a non-empty string');
+  const text = value.text.trim();
+  if (Buffer.byteLength(text, 'utf8') > MAX_TEXT_BYTES) throw new HttpError(413, 'TEXT_TOO_LARGE', 'text must be 5000 UTF-8 bytes or fewer');
+  const languageCode = value.languageCode === undefined ? 'en' : value.languageCode;
+  if (typeof languageCode !== 'string' || !LANGUAGES.has(languageCode)) throw invalid('Unsupported languageCode');
+  return { text, languageCode };
+}
