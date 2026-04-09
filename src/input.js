@@ -48,3 +48,41 @@ function validateText(value) {
   if (typeof languageCode !== 'string' || !LANGUAGES.has(languageCode)) throw invalid('Unsupported languageCode');
   return { text, languageCode };
 }
+
+// RFC 4180-style parser: quoted commas, escaped quotes, CRLF, and embedded newlines.
+function parseCsv(text) {
+  const rows = []; let row = []; let field = ''; let quoted = false; let closed = false;
+  text = text.replace(/^\uFEFF/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') { quoted = false; closed = true; }
+      else field += c;
+    } else if (c === '"') {
+      if (field || closed) throw invalid('Invalid CSV quoting');
+      quoted = true;
+    } else if (c === ',' || c === '\n' || c === '\r') {
+      row.push(field); field = ''; closed = false;
+      if (c !== ',') {
+        rows.push(row); row = [];
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        if (rows.length > MAX_RECORDS + 1) throw invalid(`At most ${MAX_RECORDS} records are allowed`);
+      }
+    } else {
+      if (closed) throw invalid('Unexpected text after a closing CSV quote');
+      field += c;
+    }
+  }
+  if (quoted) throw invalid('Unclosed CSV quote');
+  if (field || row.length || closed) { row.push(field); rows.push(row); }
+  const headings = rows.shift()?.map((s) => s.trim());
+  const allowed = new Set(['id', 'text', 'languageCode', 'date', 'product', 'source']);
+  if (!headings?.includes('text') || new Set(headings).size !== headings.length || headings.some((s) => !allowed.has(s))) {
+    throw invalid('CSV needs a text column; allowed columns: id,text,languageCode,date,product,source');
+  }
+  return rows.filter((r) => !(r.length === 1 && r[0] === '')).map((values, index) => {
+    if (values.length !== headings.length) throw invalid(`CSV row ${index + 2} has the wrong number of columns`);
+    return Object.fromEntries(headings.map((key, i) => [key, values[i]]).filter(([key, value]) => value !== '' || key === 'text'));
+  });
+}
