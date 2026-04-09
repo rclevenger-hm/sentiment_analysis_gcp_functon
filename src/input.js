@@ -134,3 +134,12 @@ function dateOnly(value) {
   }
   return value;
 }
+
+function tenantFrom(event) {
+  // Claims are injected only after cryptographic verification in the HTTP adapter.
+  const identity = event.requestContext?.identity;
+  if (typeof identity?.issuer !== 'string' || typeof identity?.subject !== 'string' || !identity.issuer || !identity.subject) {
+    throw new HttpError(401, 'UNAUTHENTICATED', 'An authenticated Google principal is required');
+  }
+  return hash(`${identity.issuer}:${identity.subject}`);
+}
