@@ -86,3 +86,44 @@ function parseCsv(text) {
     return Object.fromEntries(headings.map((key, i) => [key, values[i]]).filter(([key, value]) => value !== '' || key === 'text'));
   });
 }
+
+function parseBulk(event) {
+  const text = decodeBody(event);
+  const type = (header(event, 'content-type') || 'application/json').split(';')[0].trim().toLowerCase();
+  let records; let targeted = false; let label = '';
+  if (type === 'text/csv') {
+    records = parseCsv(text);
+    const setting = event.queryStringParameters?.targeted;
+    if (setting !== undefined && !['true', 'false'].includes(setting)) throw invalid('targeted must be true or false');
+    targeted = setting === 'true';
+  } else if (type === 'application/json') {
+    const payload = parseJson(text);
+    records = payload.records; targeted = payload.targeted === undefined ? false : payload.targeted; label = payload.label === undefined ? '' : payload.label;
+  } else throw new HttpError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Use application/json or text/csv');
+  if (!Array.isArray(records) || !records.length || records.length > MAX_RECORDS) throw invalid(`records must contain 1–${MAX_RECORDS} items`);
+  if (typeof targeted !== 'boolean') throw invalid('targeted must be a boolean');
+  if (typeof label !== 'string' || label.length > 120) throw invalid('label must be a string of at most 120 characters');
+  const seen = new Set();
+  const normalized = records.map((value, index) => {
+    const id = object(value) && value.id !== undefined ? value.id : `row-${index + 1}`;
+    if (typeof id !== 'string' || !id.trim() || id.length > 128 || /[\x00-\x1f]/.test(id)) throw invalid(`Invalid record id at row ${index + 1}`);
+    if (seen.has(id)) throw invalid(`Duplicate record id: ${id}`);
+    seen.add(id);
+    try {
+      const record = { id, ...validateText(value) };
+      if (targeted && !TARGETED_LANGUAGES.has(record.languageCode)) throw invalid('Entity sentiment supports en, es, and ja');
+      for (const key of ['product', 'source']) {
+        if (value[key] !== undefined) {
+          if (typeof value[key] !== 'string' || value[key].length > 120) throw invalid(`${key} must be a string of at most 120 characters`);
+          record[key] = value[key];
+        }
+      }
+      if (value.date !== undefined) { dateOnly(value.date); record.date = value.date; }
+      return record;
+    } catch (error) {
+      if (!(error instanceof HttpError)) throw error;
+      return { id, error: { code: error.code, message: error.message } };
+    }
+  });
+  return { records: normalized, targeted, label };
+}
