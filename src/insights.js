@@ -24,3 +24,16 @@ function filtersFrom(query = {}) {
   if (filters.minScore !== undefined && filters.maxScore !== undefined && filters.minScore > filters.maxScore) throw invalid('minScore must be at most maxScore');
   return filters;
 }
+
+function filterResults(records, filters = {}, fallbackDate) {
+  return records.filter((record) => {
+    for (const key of ['product', 'source', 'languageCode', 'sentiment']) if (filters[key] !== undefined && record[key] !== filters[key]) return false;
+    const date = record.date || fallbackDate;
+    if (filters.from && (!date || date < filters.from)) return false;
+    if (filters.to && (!date || date > filters.to)) return false;
+    if (filters.minScore !== undefined && (!Number.isFinite(record.score) || record.score < filters.minScore)) return false;
+    if (filters.maxScore !== undefined && (!Number.isFinite(record.score) || record.score > filters.maxScore)) return false;
+    if (filters.minMagnitude !== undefined && (!Number.isFinite(record.magnitude) || record.magnitude < filters.minMagnitude)) return false;
+    return true;
+  });
+}
