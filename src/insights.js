@@ -37,3 +37,34 @@ function filterResults(records, filters = {}, fallbackDate) {
     return true;
   });
 }
+
+function summarize(records, fallbackDate) {
+  const counts = { POSITIVE: 0, NEGATIVE: 0, NEUTRAL: 0, MIXED: 0 };
+  const days = new Map(); const concerns = new Map();
+  let failed = 0; let insightFailures = 0;
+  for (const record of records) {
+    if (!SENTIMENTS.has(record.sentiment)) { failed++; continue; }
+    counts[record.sentiment]++;
+    if (record.insightsError) insightFailures++;
+    const day = record.date || fallbackDate;
+    const trend = days.get(day) || { date: day, total: 0, negative: 0 };
+    trend.total++; trend.negative += Number(record.sentiment === 'NEGATIVE'); days.set(day, trend);
+    const seen = new Set();
+    for (const entity of record.entities || []) for (const mention of entity.mentions) {
+      const key = mention.text.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      const concern = concerns.get(key) || { text: mention.text, records: 0, negative: 0, evidence: [] };
+      concern.records++; concern.negative += Number(mention.sentiment === 'NEGATIVE');
+      if (concern.evidence.length < 3) concern.evidence.push({ recordId: record.id, sentiment: mention.sentiment, excerpt: mention.excerpt });
+      concerns.set(key, concern);
+    }
+  }
+  const analyzed = records.length - failed;
+  return {
+    total: records.length, analyzed, failed, insightFailures, counts,
+    negativeRate: analyzed ? counts.NEGATIVE / analyzed : null,
+    trends: [...days.values()].sort((a, b) => a.date.localeCompare(b.date)).map((day) => ({ ...day, negativeRate: day.negative / day.total })),
+    concerns: [...concerns.values()].sort((a, b) => b.negative - a.negative || b.records - a.records).slice(0, 30),
+  };
+}
