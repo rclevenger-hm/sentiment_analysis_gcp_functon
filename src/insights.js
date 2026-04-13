@@ -85,3 +85,12 @@ function csvExport(records) {
   const columns = ['id', 'text', 'date', 'product', 'source', 'languageCode', 'sentiment', 'score', 'magnitude', 'labelPolicy', 'entities', 'error', 'insightsError'];
   return [columns.join(','), ...records.map((record) => columns.map((key) => cell(record[key])).join(','))].join('\r\n');
 }
+
+function validateRule(value) {
+  if (value.filters !== undefined && !object(value.filters)) throw invalid('filters must be an object');
+  if (typeof value.enabled !== 'boolean') throw invalid('enabled must be boolean');
+  if (!Number.isInteger(value.minRecords) || value.minRecords < 1 || value.minRecords > 200) throw invalid('minRecords must be between 1 and 200');
+  if (typeof value.negativeRate !== 'number' || !Number.isFinite(value.negativeRate) || value.negativeRate < 0 || value.negativeRate > 1) throw invalid('negativeRate must be between 0 and 1');
+  return { enabled: value.enabled, minRecords: value.minRecords, negativeRate: value.negativeRate,
+    filters: filtersFrom(value.filters || {}) };
+}
