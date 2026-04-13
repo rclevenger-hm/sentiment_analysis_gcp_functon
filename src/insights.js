@@ -68,3 +68,9 @@ function summarize(records, fallbackDate) {
     concerns: [...concerns.values()].sort((a, b) => b.negative - a.negative || b.records - a.records).slice(0, 30),
   };
 }
+
+function compare(current, baseline) {
+  return { current, baseline, analyzedChange: current.analyzed - baseline.analyzed,
+    negativeRateChange: current.negativeRate === null || baseline.negativeRate === null ? null : current.negativeRate - baseline.negativeRate,
+    note: 'Rates use successfully analyzed records. Differences describe these samples; they do not establish statistical significance.' };
+}
