@@ -94,3 +94,12 @@ function validateRule(value) {
   return { enabled: value.enabled, minRecords: value.minRecords, negativeRate: value.negativeRate,
     filters: filtersFrom(value.filters || {}) };
 }
+
+function evaluateRule(rule, records, fallbackDate) {
+  if (!rule?.enabled) return null;
+  const summary = summarize(filterResults(records, rule.filters, fallbackDate), fallbackDate);
+  if (summary.analyzed < rule.minRecords || summary.negativeRate < rule.negativeRate) return null;
+  return { type: 'NEGATIVE_SENTIMENT_THRESHOLD', analyzed: summary.analyzed, negativeRate: summary.negativeRate,
+    threshold: rule.negativeRate, message: `${summary.counts.NEGATIVE} of ${summary.analyzed} analyzed records were negative`,
+    evidenceRecordIds: filterResults(records, { ...rule.filters, sentiment: 'NEGATIVE' }, fallbackDate).slice(0, 10).map((record) => record.id) };
+}
