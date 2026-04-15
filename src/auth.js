@@ -19,3 +19,4 @@ function createAuthenticator(config = process.env, verify) {
     return { issuer: 'https://accounts.google.com', subject: payload.sub };
   };
 }
+module.exports = { createAuthenticator };
