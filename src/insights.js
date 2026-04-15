@@ -103,3 +103,5 @@ function evaluateRule(rule, records, fallbackDate) {
     threshold: rule.negativeRate, message: `${summary.counts.NEGATIVE} of ${summary.analyzed} analyzed records were negative`,
     evidenceRecordIds: filterResults(records, { ...rule.filters, sentiment: 'NEGATIVE' }, fallbackDate).slice(0, 10).map((record) => record.id) };
 }
+
+module.exports = { SENTIMENTS, filtersFrom, filterResults, summarize, compare, csvExport, validateRule, evaluateRule };
