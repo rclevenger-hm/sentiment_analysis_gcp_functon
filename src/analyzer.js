@@ -15,3 +15,15 @@ function label(value, sentences = []) {
   if (values.some((s) => s >= 0.25) && values.some((s) => s <= -0.25)) return 'MIXED';
   return score >= 0.25 ? 'POSITIVE' : score <= -0.25 ? 'NEGATIVE' : 'NEUTRAL';
 }
+function entitiesFrom(entities, text) {
+  return { entities: (entities || []).slice(0, 10).map((entity) => ({
+    name: String(entity.name || '').slice(0, 160), salience: entity.salience,
+    ...nativeSentiment(entity.sentiment),
+    mentions: (entity.mentions || []).slice(0, 3).map((mention) => {
+      const content = String(mention.text?.content || ''); const beginOffset = mention.text?.beginOffset;
+      if (!Number.isInteger(beginOffset) || beginOffset < 0 || text.slice(beginOffset, beginOffset + content.length) !== content) throw new Error('Invalid entity source offset');
+      return { text: content.slice(0, 160), type: entity.type, sentiment: label(mention.sentiment), ...nativeSentiment(mention.sentiment), beginOffset, endOffset: beginOffset + content.length,
+        excerpt: text.slice(Math.max(0, beginOffset - 40), beginOffset + content.length + 40).slice(0, 240) };
+    }), truncated: (entity.mentions || []).length > 3,
+  })), entitiesTruncated: (entities || []).length > 10, offsetEncoding: 'UTF16' };
+}
