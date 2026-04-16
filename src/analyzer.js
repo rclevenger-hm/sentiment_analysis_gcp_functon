@@ -9,3 +9,9 @@ function nativeSentiment(value) {
   if (!value || !Number.isFinite(value.score) || value.score < -1 || value.score > 1 || !Number.isFinite(value.magnitude) || value.magnitude < 0) throw new Error('Malformed Google sentiment');
   return { score: value.score, magnitude: value.magnitude };
 }
+function label(value, sentences = []) {
+  const { score } = nativeSentiment(value);
+  const values = sentences.map((s) => nativeSentiment(s.sentiment).score);
+  if (values.some((s) => s >= 0.25) && values.some((s) => s <= -0.25)) return 'MIXED';
+  return score >= 0.25 ? 'POSITIVE' : score <= -0.25 ? 'NEGATIVE' : 'NEUTRAL';
+}
