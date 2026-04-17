@@ -27,3 +27,41 @@ function entitiesFrom(entities, text) {
     }), truncated: (entity.mentions || []).length > 3,
   })), entitiesTruncated: (entities || []).length > 10, offsetEncoding: 'UTF16' };
 }
+function createAnalyzer(client = new v1.LanguageServiceClient()) {
+  const options = () => ({ timeout: 8000, retry: null });
+  async function analyze(record, targeted) {
+    const document = { content: record.text, type: 'PLAIN_TEXT', language: language(record.languageCode) };
+    const [response] = await client.analyzeSentiment({ document, encodingType: 'UTF16' }, options());
+    const result = { ...nativeSentiment(response.documentSentiment), sentiment: label(response.documentSentiment, response.sentences || []), labelPolicy: POLICY, languageCode: record.languageCode };
+    if (targeted) {
+      try {
+        const [detail] = await client.analyzeEntitySentiment({ document, encodingType: 'UTF16' }, options());
+        Object.assign(result, entitiesFrom(detail.entities, record.text));
+      } catch (error) {
+        if (transient(error) || [7, 16].includes(Number(error.code))) throw error;
+        result.insightsError = safeError();
+      }
+    }
+    return result;
+  }
+  return {
+    async single(record, targeted = false) { return analyze(record, targeted); },
+    async batch(records, targeted = false) {
+      const output = records.map((record) => ({ ...record }));
+      // Four documents in flight bounds API pressure and fits a 25-row checkpoint.
+      for (let offset = 0; offset < records.length; offset += 4) {
+        const settled = await Promise.allSettled(records.slice(offset, offset + 4).map(async (record, i) => {
+          if (record.error) return;
+          try { Object.assign(output[offset + i], await analyze(record, targeted)); }
+          catch (error) {
+            if (Number(error.code) !== 3) throw error; // Only InvalidArgument is a permanent row failure.
+            output[offset + i].error = safeError();
+          }
+        }));
+        const failure = settled.find((r) => r.status === 'rejected');
+        if (failure) throw failure.reason;
+      }
+      return output;
+    },
+  };
+}
