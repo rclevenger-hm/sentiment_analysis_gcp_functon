@@ -65,3 +65,4 @@ function createAnalyzer(client = new v1.LanguageServiceClient()) {
     },
   };
 }
+module.exports = { createAnalyzer, transient, nativeSentiment, label, entitiesFrom, POLICY };
