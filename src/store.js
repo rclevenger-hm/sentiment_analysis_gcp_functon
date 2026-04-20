@@ -41,6 +41,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
   }
   const store = {
     expiry: () => now() + retention * 86400,
+    async putObject(path, value) { await saveObject(path, JSON.stringify(value), 'application/json'); },
   };
   return store;
 }
