@@ -43,6 +43,11 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
     expiry: () => now() + retention * 86400,
     async putObject(path, value) { await saveObject(path, JSON.stringify(value), 'application/json'); },
     async getObject(path) { const [body] = await bucket.file(path).download(); return JSON.parse(body.toString('utf8')); },
+    async exportFile(path, content, format) {
+      await saveObject(path, content, format === 'csv' ? 'text/csv; charset=utf-8' : 'application/json', `attachment; filename="sentiment-results.${format}"`);
+      const [url] = await bucket.file(path).getSignedUrl({ version: 'v4', action: 'read', expires: new Date(clock().getTime() + 60000) });
+      return url;
+    },
   };
   return store;
 }
