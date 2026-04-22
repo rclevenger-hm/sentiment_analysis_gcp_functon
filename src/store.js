@@ -49,6 +49,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       return url;
     },
     async get(tenant, key) { const item = data(await ref(tenant, key).get()); return item && item.expiresAt > now() ? item : null; },
+    async getJob(tenant, jobId) { const job = await store.get(tenant, `JOB#${jobId}`); if (!job) throw notFound(); return job; },
   };
   return store;
 }
