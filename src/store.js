@@ -48,6 +48,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       const [url] = await bucket.file(path).getSignedUrl({ version: 'v4', action: 'read', expires: new Date(clock().getTime() + 60000) });
       return url;
     },
+    async get(tenant, key) { const item = data(await ref(tenant, key).get()); return item && item.expiresAt > now() ? item : null; },
   };
   return store;
 }
