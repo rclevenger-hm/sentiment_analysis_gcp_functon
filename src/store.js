@@ -66,6 +66,22 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         transaction.set(reference, doc({ tenantId, key, units: (old?.units || 0) + units, expiresAt: now() + 3 * 86400 }));
       });
     },
+    async createJob(job, units) {
+      const key = usageKey();
+      return tx(async (transaction) => {
+        const jobRef = ref(job.tenantId, job.key), usageRef = ref(job.tenantId, key);
+        const existing = data(await transaction.get(jobRef));
+        if (existing) {
+          if (existing.expiresAt <= now()) throw new HttpError(409, 'EXPIRED_KEY', 'Use a new Idempotency-Key');
+          return { job: existing, created: false };
+        }
+        const used = data(await transaction.get(usageRef));
+        if (!Number.isInteger(units) || units < 0 || (used?.units || 0) + units > quota) throw quotaError();
+        transaction.create(jobRef, doc({ ...job, parts: [] }));
+        transaction.set(usageRef, doc({ tenantId: job.tenantId, key, units: (used?.units || 0) + units, expiresAt: now() + 3 * 86400 }));
+        return { job: { ...job, parts: [] }, created: true };
+      });
+    },
   };
   return store;
 }
