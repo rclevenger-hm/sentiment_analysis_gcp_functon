@@ -58,6 +58,14 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         transaction.set(reference, doc({ tenantId, key, units: (old?.units || 0) + 1, expiresAt: now() + 120 }));
       });
     },
+    async reserveUsage(tenantId, units) {
+      const key = usageKey();
+      await tx(async (transaction) => {
+        const reference = ref(tenantId, key), old = data(await transaction.get(reference));
+        if (!Number.isInteger(units) || units < 0 || (old?.units || 0) + units > quota) throw quotaError();
+        transaction.set(reference, doc({ tenantId, key, units: (old?.units || 0) + units, expiresAt: now() + 3 * 86400 }));
+      });
+    },
   };
   return store;
 }
