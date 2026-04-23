@@ -50,6 +50,14 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
     },
     async get(tenant, key) { const item = data(await ref(tenant, key).get()); return item && item.expiresAt > now() ? item : null; },
     async getJob(tenant, jobId) { const job = await store.get(tenant, `JOB#${jobId}`); if (!job) throw notFound(); return job; },
+    async reserveRequest(tenantId) {
+      const key = `RATE#${clock().toISOString().slice(0, 16)}`;
+      await tx(async (transaction) => {
+        const reference = ref(tenantId, key), old = data(await transaction.get(reference));
+        if ((old?.units || 0) >= rate) throw new HttpError(429, 'RATE_LIMIT_EXCEEDED', 'Request rate exceeded; retry in one minute');
+        transaction.set(reference, doc({ tenantId, key, units: (old?.units || 0) + 1, expiresAt: now() + 120 }));
+      });
+    },
   };
   return store;
 }
