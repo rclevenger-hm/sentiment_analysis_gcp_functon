@@ -102,6 +102,14 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         if (alert) transaction.create(ref(job.tenantId, `ALERT#${job.jobId}`), doc({ tenantId: job.tenantId, key: `ALERT#${job.jobId}`, collectionId: `${job.tenantId}#alerts`, jobId: job.jobId, alert, acknowledged: false, createdAt: clock().toISOString(), expiresAt: job.expiresAt }));
       });
     },
+    async results(job) {
+      const records = (await Promise.all((job.parts || []).map((p) => store.getObject(p)))).flat();
+      if (job.status === 'FAILED' && job.offset < job.total) {
+        const input = await store.getObject(job.inputKey);
+        records.push(...input.records.slice(job.offset).map((r) => ({ ...r, error: r.error || { code: 'JOB_FAILED', message: 'Retry limit exceeded before this record completed' } })));
+      }
+      return records;
+    },
   };
   return store;
 }
