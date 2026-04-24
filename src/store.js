@@ -82,6 +82,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         return { job: { ...job, parts: [] }, created: true };
       });
     },
+    async enqueue(tenantId, jobId) { await topic.publishMessage({ json: { tenantId, jobId } }); },
   };
   return store;
 }
