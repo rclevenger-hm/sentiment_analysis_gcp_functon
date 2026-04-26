@@ -110,6 +110,22 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       }
       return records;
     },
+    async list(tenant, collectionName, { limit = 20, cursor, from, to, status } = {}) {
+      const signature = hash(JSON.stringify({ tenant, collectionName, from, to, status })); let start;
+      if (cursor) {
+        try {
+          if (cursor.length > 2048) throw invalid('Invalid cursor');
+          start = JSON.parse(Buffer.from(cursor, 'base64url').toString());
+          if (start.signature !== signature || typeof start.createdAt !== 'string' || !/^[a-f0-9]{64}$/.test(start.id || '')) throw invalid('Invalid cursor');
+        } catch { throw invalid('Invalid cursor'); }
+      }
+      let query = collection.where('tenantId', '==', tenant).where('collectionId', '==', `${tenant}#${collectionName}`).where('createdAt', '>=', from ? `${from}T00:00:00.000Z` : '0000').where('createdAt', '<=', to ? `${to}T23:59:59.999Z` : '9999');
+      if (status) query = query.where('status', '==', status);
+      query = query.orderBy('createdAt', 'desc').orderBy(FieldPath.documentId(), 'desc');
+      if (start) query = query.startAfter(start.createdAt, start.id);
+      const page = await query.limit(limit + 1).get(); const visible = page.docs.slice(0, limit), last = visible.at(-1);
+      return { items: visible.map(data).filter((v) => v.expiresAt > now()), nextCursor: page.docs.length > limit ? Buffer.from(JSON.stringify({ signature, createdAt: last.data().createdAt, id: last.id })).toString('base64url') : null };
+    },
   };
   return store;
 }
