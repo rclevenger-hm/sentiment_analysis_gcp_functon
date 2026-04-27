@@ -127,6 +127,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       return { items: visible.map(data).filter((v) => v.expiresAt > now()), nextCursor: page.docs.length > limit ? Buffer.from(JSON.stringify({ signature, createdAt: last.data().createdAt, id: last.id })).toString('base64url') : null };
     },
     async putRule(tenantId, rule) { await ref(tenantId, 'RULE#default').set(doc({ tenantId, key: 'RULE#default', rule, expiresAt: store.expiry() })); },
+    async acknowledge(tenant, jobId) { await mutate(tenant, `ALERT#${jobId}`, (value) => ({ ...value, acknowledged: true })); },
   };
   return store;
 }
