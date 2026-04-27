@@ -126,6 +126,7 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       const page = await query.limit(limit + 1).get(); const visible = page.docs.slice(0, limit), last = visible.at(-1);
       return { items: visible.map(data).filter((v) => v.expiresAt > now()), nextCursor: page.docs.length > limit ? Buffer.from(JSON.stringify({ signature, createdAt: last.data().createdAt, id: last.id })).toString('base64url') : null };
     },
+    async putRule(tenantId, rule) { await ref(tenantId, 'RULE#default').set(doc({ tenantId, key: 'RULE#default', rule, expiresAt: store.expiry() })); },
   };
   return store;
 }
