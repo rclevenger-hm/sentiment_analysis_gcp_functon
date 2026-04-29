@@ -143,6 +143,14 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         return { ...state, cursor: cursor || null, ...(release ? { leaseUntil: 0 } : {}) };
       });
     },
+    async recover(cursor) {
+      let query = collection.where('status', 'in', ['QUEUED', 'RUNNING']).where('updatedAt', '<', new Date(clock().getTime() - 15 * 60000).toISOString()).orderBy('updatedAt').orderBy(FieldPath.documentId());
+      if (cursor) query = query.startAfter(cursor.updatedAt, cursor.id);
+      const page = await query.limit(100).get();
+      for (const snapshot of page.docs) { const job = snapshot.data(); if (job.expiresAt > now() && (!job.leaseUntil || job.leaseUntil <= now())) await store.enqueue(job.tenantId, job.jobId); }
+      const last = page.docs.at(-1);
+      return page.docs.length === 100 ? { updatedAt: last.data().updatedAt, id: last.id } : null;
+    }
   };
   return store;
 }
