@@ -129,6 +129,14 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
     async putRule(tenantId, rule) { await ref(tenantId, 'RULE#default').set(doc({ tenantId, key: 'RULE#default', rule, expiresAt: store.expiry() })); },
     async acknowledge(tenant, jobId) { await mutate(tenant, `ALERT#${jobId}`, (value) => ({ ...value, acknowledged: true })); },
     async usage(tenant) { const date = clock().toISOString().slice(0, 10), value = await store.get(tenant, `USAGE#${date}`); return { date, units: value?.units || 0, limit: quota, unit: 'accepted inference operations; targeted analysis counts twice', resetsAt: new Date(Date.parse(date) + 86400000).toISOString() }; },
+    async claimRecovery() {
+      return tx(async (transaction) => {
+        const reference = ref('system-recovery', 'RECOVERY#cursor'), old = data(await transaction.get(reference));
+        if (old?.leaseUntil > now()) return null;
+        const state = { tenantId: 'system-recovery', key: 'RECOVERY#cursor', cursor: old?.cursor || null, leaseToken: randomUUID(), leaseUntil: now() + 180, expiresAt: store.expiry() };
+        transaction.set(reference, doc(state)); return state;
+      });
+    },
   };
   return store;
 }
