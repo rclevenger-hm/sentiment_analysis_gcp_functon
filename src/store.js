@@ -137,6 +137,12 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
         transaction.set(reference, doc(state)); return state;
       });
     },
+    async saveRecoveryCursor(cursor, token, release = false) {
+      await mutate('system-recovery', 'RECOVERY#cursor', (state) => {
+        if (state.leaseToken !== token || state.leaseUntil <= now()) throw new HttpError(409, 'LEASE_LOST', 'Recovery lease expired');
+        return { ...state, cursor: cursor || null, ...(release ? { leaseUntil: 0 } : {}) };
+      });
+    },
   };
   return store;
 }
