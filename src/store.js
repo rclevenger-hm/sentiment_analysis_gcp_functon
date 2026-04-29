@@ -150,7 +150,8 @@ function createStore({ db, storage, topic, config = process.env, clock = () => n
       for (const snapshot of page.docs) { const job = snapshot.data(); if (job.expiresAt > now() && (!job.leaseUntil || job.leaseUntil <= now())) await store.enqueue(job.tenantId, job.jobId); }
       const last = page.docs.at(-1);
       return page.docs.length === 100 ? { updatedAt: last.data().updatedAt, id: last.id } : null;
-    }
+    },
   };
   return store;
 }
+module.exports = { createStore, final };
