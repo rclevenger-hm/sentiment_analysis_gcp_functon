@@ -12,3 +12,8 @@ function publicJob(job) {
     targeted: job.targeted, summary: job.summary, failureReason: job.failureReason,
     expiresAt: new Date(job.expiresAt * 1000).toISOString() };
 }
+function numberParam(value, fallback, min, max) {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(String(value)) || Number(value) < min || Number(value) > max) throw invalid(`Expected an integer between ${min} and ${max}`);
+  return Number(value);
+}
