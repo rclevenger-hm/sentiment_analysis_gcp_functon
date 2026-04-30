@@ -17,3 +17,4 @@ function numberParam(value, fallback, min, max) {
   if (!/^\d+$/.test(String(value)) || Number(value) < min || Number(value) > max) throw invalid(`Expected an integer between ${min} and ${max}`);
   return Number(value);
 }
+function jobId(value) { if (!/^[a-f0-9]{64}$/.test(value || '')) throw invalid('Invalid job id'); return value; }
