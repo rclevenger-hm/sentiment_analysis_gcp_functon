@@ -124,3 +124,4 @@ function createHandler({ store, analyzer, clock = () => new Date(), logger = con
     }
   };
 }
+module.exports = { createHandler, publicJob };
