@@ -45,3 +45,4 @@ function createWorker({ store, analyzer, logger = console }) {
   }
   return { processJob, recover };
 }
+module.exports = { createWorker, message };
