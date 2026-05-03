@@ -24,3 +24,9 @@ function createHttpAdapter({ authenticate, handler, logger = console }) {
     }
   };
 }
+function decodePush(request) {
+  const envelope = parseJson(decodeRaw(request, 8192));
+  const encoded = envelope.message?.data;
+  if (typeof encoded !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) throw new Error('Invalid Pub/Sub envelope');
+  return parseJson(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(encoded, 'base64')));
+}
