@@ -8,3 +8,19 @@ function decodeRaw(request, limit = MAX_REQUEST_BYTES) {
   try { return new TextDecoder('utf-8', { fatal: true }).decode(raw); }
   catch { throw new HttpError(400, 'INVALID_REQUEST', 'Request body must be valid UTF-8'); }
 }
+function createHttpAdapter({ authenticate, handler, logger = console }) {
+  return async (request, response) => {
+    const requestId = randomUUID();
+    try {
+      const identity = await authenticate(request.headers.authorization);
+      const body = ['GET', 'HEAD'].includes(request.method) ? '' : decodeRaw(request);
+      const query = Object.fromEntries(new URL(request.originalUrl || request.url, 'https://internal').searchParams);
+      const result = await handler({ httpMethod: request.method, path: request.path, headers: request.headers, body, queryStringParameters: query, requestContext: { requestId, identity } });
+      response.status(result.statusCode).set(result.headers).send(result.body);
+    } catch (error) {
+      const known = error instanceof HttpError;
+      logger.error(JSON.stringify({ event: 'http_error', requestId, errorName: error.name }));
+      response.status(known ? error.status : 503).set({ 'cache-control': 'no-store', 'x-request-id': requestId }).json({ code: known ? error.code : 'SERVICE_UNAVAILABLE', error: known ? error.message : 'Service temporarily unavailable', requestId });
+    }
+  };
+}
