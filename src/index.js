@@ -8,3 +8,4 @@ const { createHttpAdapter, decodePush } = require('./http');
 const { createWorker } = require('./worker');
 let store, analyzer, api, worker;
 function getStore() { return store ||= createStore(); }
+function getWorker() { return worker ||= createWorker({ store: getStore(), analyzer: analyzer ||= createAnalyzer() }); }
