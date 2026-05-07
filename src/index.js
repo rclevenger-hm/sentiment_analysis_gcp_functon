@@ -19,3 +19,8 @@ functions.http('sentimentWorker', async (request, response) => {
   try { await getWorker().processJob(decodePush(request)); return response.sendStatus(204); }
   catch (error) { console.error(JSON.stringify({ event: 'worker_error', errorName: error.name })); return response.status(503).send('Retry later'); }
 });
+functions.http('sentimentRecovery', async (request, response) => {
+  if (request.method !== 'POST') return response.sendStatus(405);
+  try { await getWorker().recover(); return response.sendStatus(204); }
+  catch (error) { console.error(JSON.stringify({ event: 'recovery_error', errorName: error.name })); return response.status(503).send('Retry later'); }
+});
