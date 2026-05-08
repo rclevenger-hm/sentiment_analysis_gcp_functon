@@ -15,3 +15,9 @@ test('Google native score and magnitude are preserved without confidence fabrica
   const result = await analyzer.single({ text: 'good', languageCode: 'en' });
   assert.equal(result.score, 0.6); assert.equal(result.magnitude, 1.8); assert.equal(result.sentimentScore, undefined); assert.equal(result.labelPolicy, 'sentence-polarity-v1');
 });
+test('batch concurrency is bounded at four and stable order survives completion races', async () => {
+  let active = 0, maximum = 0;
+  const analyzer = createAnalyzer({ async analyzeSentiment() { active++; maximum = Math.max(active, maximum); await new Promise((resolve) => setTimeout(resolve, 2)); active--; return [{ documentSentiment: score(0.8), sentences: [] }]; } });
+  const records = Array.from({ length: 25 }, (_, i) => ({ id: String(i), text: 'good', languageCode: 'en' }));
+  const results = await analyzer.batch(records); assert.equal(maximum, 4); assert.deepEqual(results.map((r) => r.id), records.map((r) => r.id));
+});
