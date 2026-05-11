@@ -26,3 +26,7 @@ test('invalid rows never call the provider and provider InvalidArgument becomes 
   const rows = await analyzer.batch([{ id: 'invalid', error: { code: 'INVALID' } }, { id: 'provider', text: 'x', languageCode: 'en' }]);
   assert.equal(calls, 1); assert.equal(rows[0].error.code, 'INVALID'); assert.equal(rows[1].error.code, 'ANALYSIS_FAILED'); assert.doesNotMatch(JSON.stringify(rows), /secret text/);
 });
+for (const code of [4, 7, 8, 13, 14, 16]) test(`provider error ${code} retries rather than completing false failures`, async () => {
+  const analyzer = createAnalyzer({ async analyzeSentiment() { throw Object.assign(new Error('retry'), { code }); } });
+  await assert.rejects(analyzer.batch([{ text: 'x', languageCode: 'en' }]), /retry/);
+});
