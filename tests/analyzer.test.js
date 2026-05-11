@@ -21,3 +21,8 @@ test('batch concurrency is bounded at four and stable order survives completion 
   const records = Array.from({ length: 25 }, (_, i) => ({ id: String(i), text: 'good', languageCode: 'en' }));
   const results = await analyzer.batch(records); assert.equal(maximum, 4); assert.deepEqual(results.map((r) => r.id), records.map((r) => r.id));
 });
+test('invalid rows never call the provider and provider InvalidArgument becomes a row error', async () => {
+  let calls = 0; const analyzer = createAnalyzer({ async analyzeSentiment() { calls++; throw Object.assign(new Error('secret text'), { code: 3 }); } });
+  const rows = await analyzer.batch([{ id: 'invalid', error: { code: 'INVALID' } }, { id: 'provider', text: 'x', languageCode: 'en' }]);
+  assert.equal(calls, 1); assert.equal(rows[0].error.code, 'INVALID'); assert.equal(rows[1].error.code, 'ANALYSIS_FAILED'); assert.doesNotMatch(JSON.stringify(rows), /secret text/);
+});
