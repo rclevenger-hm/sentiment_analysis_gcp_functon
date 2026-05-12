@@ -30,3 +30,7 @@ for (const code of [4, 7, 8, 13, 14, 16]) test(`provider error ${code} retries r
   const analyzer = createAnalyzer({ async analyzeSentiment() { throw Object.assign(new Error('retry'), { code }); } });
   await assert.rejects(analyzer.batch([{ text: 'x', languageCode: 'en' }]), /retry/);
 });
+test('permanent entity-insight failure preserves overall sentiment explicitly', async () => {
+  const analyzer = createAnalyzer({ async analyzeSentiment() { return [{ documentSentiment: score(-0.8), sentences: [] }]; }, async analyzeEntitySentiment() { throw Object.assign(new Error('unsupported'), { code: 3 }); } });
+  const result = await analyzer.single({ text: 'bad', languageCode: 'en' }, true); assert.equal(result.sentiment, 'NEGATIVE'); assert.ok(result.insightsError);
+});
