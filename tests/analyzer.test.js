@@ -34,3 +34,7 @@ test('permanent entity-insight failure preserves overall sentiment explicitly', 
   const analyzer = createAnalyzer({ async analyzeSentiment() { return [{ documentSentiment: score(-0.8), sentences: [] }]; }, async analyzeEntitySentiment() { throw Object.assign(new Error('unsupported'), { code: 3 }); } });
   const result = await analyzer.single({ text: 'bad', languageCode: 'en' }, true); assert.equal(result.sentiment, 'NEGATIVE'); assert.ok(result.insightsError);
 });
+test('transient entity errors propagate for worker retry', async () => {
+  const analyzer = createAnalyzer({ async analyzeSentiment() { return [{ documentSentiment: score(0.8), sentences: [] }]; }, async analyzeEntitySentiment() { throw Object.assign(new Error('transient'), { code: 14 }); } });
+  await assert.rejects(analyzer.batch([{ text: 'good', languageCode: 'en' }], true), /transient/);
+});
