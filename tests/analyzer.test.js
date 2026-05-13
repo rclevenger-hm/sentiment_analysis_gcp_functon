@@ -38,3 +38,10 @@ test('transient entity errors propagate for worker retry', async () => {
   const analyzer = createAnalyzer({ async analyzeSentiment() { return [{ documentSentiment: score(0.8), sentences: [] }]; }, async analyzeEntitySentiment() { throw Object.assign(new Error('transient'), { code: 14 }); } });
   await assert.rejects(analyzer.batch([{ text: 'good', languageCode: 'en' }], true), /transient/);
 });
+test('entity evidence uses UTF-16 and bounds entities, mentions and excerpts', () => {
+  const entity = { name: 'battery', type: 'CONSUMER_GOOD', salience: 0.5, sentiment: score(-0.8), mentions: Array.from({ length: 5 }, () => ({ text: { content: 'battery', beginOffset: 3 }, sentiment: score(-0.8) })) };
+  const result = entitiesFrom(Array.from({ length: 12 }, () => entity), '😀 battery is bad');
+  assert.equal(result.entities.length, 10); assert.equal(result.entities[0].mentions.length, 3); assert.ok(result.entities[0].truncated); assert.ok(result.entitiesTruncated);
+  const mention = result.entities[0].mentions[0]; assert.equal('😀 battery is bad'.slice(mention.beginOffset, mention.endOffset), 'battery');
+  assert.throws(() => entitiesFrom([{ ...entity, mentions: [{ text: { content: 'missing', beginOffset: -1 }, sentiment: score(0) }] }], 'x'));
+});
