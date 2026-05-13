@@ -52,3 +52,8 @@ test('traditional Chinese maps to the provider code and encoding is explicit', a
   let request; const analyzer = createAnalyzer({ async analyzeSentiment(value) { request = value; return [{ documentSentiment: score(0.9), sentences: [] }]; } });
   await analyzer.single({ text: '服務很好', languageCode: 'zh-TW' }); assert.equal(request.document.language, 'zh-Hant'); assert.equal(request.encodingType, 'UTF16');
 });
+test('provider language differences are validated before billable work', () => {
+  assert.throws(() => validateText({ text: 'x', languageCode: 'hi' }), /Unsupported/);
+  const result = parseBulk({ headers: {}, body: JSON.stringify({ targeted: true, records: [{ text: 'bien', languageCode: 'es' }, { text: 'gut', languageCode: 'de' }] }) });
+  assert.ok(!result.records[0].error); assert.ok(result.records[1].error);
+});
