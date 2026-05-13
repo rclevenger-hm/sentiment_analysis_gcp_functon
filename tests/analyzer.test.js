@@ -48,3 +48,7 @@ test('entity evidence uses UTF-16 and bounds entities, mentions and excerpts', (
 test('malformed native scores are never silently interpreted as neutral', () => {
   for (const value of [null, {}, score(NaN), score(2), score(0, -1)]) assert.throws(() => nativeSentiment(value));
 });
+test('traditional Chinese maps to the provider code and encoding is explicit', async () => {
+  let request; const analyzer = createAnalyzer({ async analyzeSentiment(value) { request = value; return [{ documentSentiment: score(0.9), sentences: [] }]; } });
+  await analyzer.single({ text: '服務很好', languageCode: 'zh-TW' }); assert.equal(request.document.language, 'zh-Hant'); assert.equal(request.encodingType, 'UTF16');
+});
