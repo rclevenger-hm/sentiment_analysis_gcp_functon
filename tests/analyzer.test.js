@@ -45,3 +45,6 @@ test('entity evidence uses UTF-16 and bounds entities, mentions and excerpts', (
   const mention = result.entities[0].mentions[0]; assert.equal('😀 battery is bad'.slice(mention.beginOffset, mention.endOffset), 'battery');
   assert.throws(() => entitiesFrom([{ ...entity, mentions: [{ text: { content: 'missing', beginOffset: -1 }, sentiment: score(0) }] }], 'x'));
 });
+test('malformed native scores are never silently interpreted as neutral', () => {
+  for (const value of [null, {}, score(NaN), score(2), score(0, -1)]) assert.throws(() => nativeSentiment(value));
+});
