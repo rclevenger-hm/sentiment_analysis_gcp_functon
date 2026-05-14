@@ -57,3 +57,10 @@ test('provider language differences are validated before billable work', () => {
   const result = parseBulk({ headers: {}, body: JSON.stringify({ targeted: true, records: [{ text: 'bien', languageCode: 'es' }, { text: 'gut', languageCode: 'de' }] }) });
   assert.ok(!result.records[0].error); assert.ok(result.records[1].error);
 });
+test('native score and magnitude filters are validated and do not invent confidence', () => {
+  assert.throws(() => filtersFrom({ minConfidence: 0.5 }), /does not provide confidence/);
+  assert.throws(() => filtersFrom({ minScore: 0.8, maxScore: -0.8 }));
+  assert.throws(() => filtersFrom({ minMagnitude: -1 }));
+  const records = [{ id: 'one', score: -0.8, magnitude: 1 }, { id: 'two', score: 0.1, magnitude: 0.1 }, { id: 'error', error: {} }];
+  assert.deepEqual(filterResults(records, filtersFrom({ maxScore: -0.2, minMagnitude: 0.5 })).map((r) => r.id), ['one']);
+});
