@@ -12,3 +12,7 @@ async function signer() {
   const auth = createAuthenticator(config, (token, _keys, options) => jose.jwtVerify(token, keys.publicKey, options));
   return { token, auth };
 }
+test('Google ID token signature, issuer, audience and subject are verified', async () => {
+  const f = await signer(); assert.deepEqual(await f.auth(`Bearer ${await f.token()}`), { issuer: 'https://accounts.google.com', subject: '1234567890' });
+  assert.deepEqual(await f.auth(`Bearer ${await f.token({}, { issuer: 'accounts.google.com' })}`), { issuer: 'https://accounts.google.com', subject: '1234567890' });
+});
