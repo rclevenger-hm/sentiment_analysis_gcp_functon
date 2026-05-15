@@ -16,3 +16,7 @@ test('Google ID token signature, issuer, audience and subject are verified', asy
   const f = await signer(); assert.deepEqual(await f.auth(`Bearer ${await f.token()}`), { issuer: 'https://accounts.google.com', subject: '1234567890' });
   assert.deepEqual(await f.auth(`Bearer ${await f.token({}, { issuer: 'accounts.google.com' })}`), { issuer: 'https://accounts.google.com', subject: '1234567890' });
 });
+for (const [label, claims, options] of [
+  ['expired', {}, { exp: 1 }], ['wrong issuer', {}, { issuer: 'https://attacker.example' }], ['wrong audience', {}, { audience: 'another-function' }],
+  ['missing subject', { sub: null }, {}], ['unverified email', { email_verified: false }, {}], ['non-string subject', { sub: 123 }, {}],
+]) test(`Google token authentication rejects ${label}`, async () => { const f = await signer(); await assert.rejects(f.auth(`Bearer ${await f.token(claims, options)}`), (e) => e.status === 401); });
