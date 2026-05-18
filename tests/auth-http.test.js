@@ -21,3 +21,7 @@ for (const [label, claims, options] of [
   ['missing subject', { sub: null }, {}], ['unverified email', { email_verified: false }, {}], ['non-string subject', { sub: 123 }, {}],
 ]) test(`Google token authentication rejects ${label}`, async () => { const f = await signer(); await assert.rejects(f.auth(`Bearer ${await f.token(claims, options)}`), (e) => e.status === 401); });
 test('valid but unlisted callers are forbidden', async () => { const f = await signer(); await assert.rejects(f.auth(`Bearer ${await f.token({ email: 'other@example.com' })}`), (e) => e.status === 403); });
+test('modified signatures cannot choose another principal', async () => {
+  const f = await signer(); const parts = (await f.token()).split('.'); const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); payload.sub = '999999'; parts[1] = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  await assert.rejects(f.auth(`Bearer ${parts.join('.')}`), (e) => e.status === 401);
+});
