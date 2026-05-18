@@ -20,3 +20,4 @@ for (const [label, claims, options] of [
   ['expired', {}, { exp: 1 }], ['wrong issuer', {}, { issuer: 'https://attacker.example' }], ['wrong audience', {}, { audience: 'another-function' }],
   ['missing subject', { sub: null }, {}], ['unverified email', { email_verified: false }, {}], ['non-string subject', { sub: 123 }, {}],
 ]) test(`Google token authentication rejects ${label}`, async () => { const f = await signer(); await assert.rejects(f.auth(`Bearer ${await f.token(claims, options)}`), (e) => e.status === 401); });
+test('valid but unlisted callers are forbidden', async () => { const f = await signer(); await assert.rejects(f.auth(`Bearer ${await f.token({ email: 'other@example.com' })}`), (e) => e.status === 403); });
