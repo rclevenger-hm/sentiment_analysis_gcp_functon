@@ -30,3 +30,4 @@ test('unsigned, malformed, missing and oversized tokens fail closed', async () =
   for (const value of [undefined, '', 'Basic test', 'Bearer a b', 'Bearer eyJhbGciOiJub25lIn0.e30.', `Bearer ${'a'.repeat(20000)}`]) await assert.rejects(auth(value), (e) => e.status === 401);
 });
 function response() { return { status(code) { this.code = code; return this; }, set(headers) { this.headers = headers; return this; }, send(body) { this.body = body; return this; }, json(body) { this.body = body; return this; } }; }
+const logger = { error() {} };
