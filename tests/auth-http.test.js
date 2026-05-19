@@ -25,3 +25,7 @@ test('modified signatures cannot choose another principal', async () => {
   const f = await signer(); const parts = (await f.token()).split('.'); const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); payload.sub = '999999'; parts[1] = Buffer.from(JSON.stringify(payload)).toString('base64url');
   await assert.rejects(f.auth(`Bearer ${parts.join('.')}`), (e) => e.status === 401);
 });
+test('unsigned, malformed, missing and oversized tokens fail closed', async () => {
+  const auth = createAuthenticator(config);
+  for (const value of [undefined, '', 'Basic test', 'Bearer a b', 'Bearer eyJhbGciOiJub25lIn0.e30.', `Bearer ${'a'.repeat(20000)}`]) await assert.rejects(auth(value), (e) => e.status === 401);
+});
