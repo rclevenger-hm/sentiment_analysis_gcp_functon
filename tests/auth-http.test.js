@@ -32,3 +32,8 @@ test('unsigned, malformed, missing and oversized tokens fail closed', async () =
 function response() { return { status(code) { this.code = code; return this; }, set(headers) { this.headers = headers; return this; }, send(body) { this.body = body; return this; }, json(body) { this.body = body; return this; } }; }
 const logger = { error() {} };
 function request(body = '{}') { return { method: 'POST', path: '/jobs', originalUrl: '/jobs?limit=3', headers: { 'content-type': 'application/json' }, rawBody: Buffer.from(body) }; }
+test('HTTP authenticates before parsing and ignores forged identity headers', async () => {
+  let called = false; const adapter = createHttpAdapter({ authenticate: async () => { throw new HttpError(401, 'UNAUTHENTICATED', 'Token required'); }, handler: async () => { called = true; }, logger });
+  const out = response(); await adapter({ ...request('{bad'), headers: { 'x-tenant-id': 'alice', 'x-goog-authenticated-user-id': 'forged' } }, out);
+  assert.equal(out.code, 401); assert.equal(called, false); assert.ok(out.headers['x-request-id']);
+});
