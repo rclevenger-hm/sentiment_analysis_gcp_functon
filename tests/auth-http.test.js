@@ -31,3 +31,4 @@ test('unsigned, malformed, missing and oversized tokens fail closed', async () =
 });
 function response() { return { status(code) { this.code = code; return this; }, set(headers) { this.headers = headers; return this; }, send(body) { this.body = body; return this; }, json(body) { this.body = body; return this; } }; }
 const logger = { error() {} };
+function request(body = '{}') { return { method: 'POST', path: '/jobs', originalUrl: '/jobs?limit=3', headers: { 'content-type': 'application/json' }, rawBody: Buffer.from(body) }; }
