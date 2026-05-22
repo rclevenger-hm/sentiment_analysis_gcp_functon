@@ -42,3 +42,8 @@ test('HTTP preserves CSV raw bytes, filters and verified principal', async () =>
   const out = response(); await adapter(request('text\nhello'), out);
   assert.equal(out.code, 202); assert.equal(seen.body, 'text\nhello'); assert.equal(seen.queryStringParameters.limit, '3'); assert.equal(seen.requestContext.identity.subject, 'one');
 });
+test('HTTP rejects oversized or invalid UTF-8 bodies before metering', async () => {
+  const adapter = createHttpAdapter({ authenticate: async () => ({}), handler: async () => { throw new Error('unreachable'); }, logger });
+  const large = response(); await adapter(request('a'.repeat(1024 * 1024 + 1)), large); assert.equal(large.code, 413);
+  const malformed = response(); await adapter({ ...request(), rawBody: Buffer.from([255]) }, malformed); assert.equal(malformed.code, 400);
+});
