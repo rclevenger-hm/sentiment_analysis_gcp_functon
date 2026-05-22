@@ -37,3 +37,8 @@ test('HTTP authenticates before parsing and ignores forged identity headers', as
   const out = response(); await adapter({ ...request('{bad'), headers: { 'x-tenant-id': 'alice', 'x-goog-authenticated-user-id': 'forged' } }, out);
   assert.equal(out.code, 401); assert.equal(called, false); assert.ok(out.headers['x-request-id']);
 });
+test('HTTP preserves CSV raw bytes, filters and verified principal', async () => {
+  let seen; const adapter = createHttpAdapter({ authenticate: async () => ({ issuer: 'google', subject: 'one' }), handler: async (event) => { seen = event; return { statusCode: 202, headers: {}, body: '{}' }; }, logger });
+  const out = response(); await adapter(request('text\nhello'), out);
+  assert.equal(out.code, 202); assert.equal(seen.body, 'text\nhello'); assert.equal(seen.queryStringParameters.limit, '3'); assert.equal(seen.requestContext.identity.subject, 'one');
+});
