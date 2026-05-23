@@ -47,3 +47,7 @@ test('HTTP rejects oversized or invalid UTF-8 bodies before metering', async () 
   const large = response(); await adapter(request('a'.repeat(1024 * 1024 + 1)), large); assert.equal(large.code, 413);
   const malformed = response(); await adapter({ ...request(), rawBody: Buffer.from([255]) }, malformed); assert.equal(malformed.code, 400);
 });
+test('adapter errors never return upstream secret details', async () => {
+  const adapter = createHttpAdapter({ authenticate: async () => { throw new Error('secret credential'); }, handler: async () => {}, logger });
+  const out = response(); await adapter(request(), out); assert.equal(out.code, 503); assert.doesNotMatch(JSON.stringify(out), /secret credential/);
+});
