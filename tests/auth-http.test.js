@@ -51,3 +51,9 @@ test('adapter errors never return upstream secret details', async () => {
   const adapter = createHttpAdapter({ authenticate: async () => { throw new Error('secret credential'); }, handler: async () => {}, logger });
   const out = response(); await adapter(request(), out); assert.equal(out.code, 503); assert.doesNotMatch(JSON.stringify(out), /secret credential/);
 });
+test('Pub/Sub push parsing requires a bounded, valid base64 JSON envelope', () => {
+  const value = { tenantId: 'a'.repeat(64), jobId: 'b'.repeat(64) };
+  const valid = request(JSON.stringify({ message: { data: Buffer.from(JSON.stringify(value)).toString('base64') } }));
+  assert.deepEqual(decodePush(valid), value);
+  for (const body of ['null', '{}', '{bad', JSON.stringify({ message: { data: 'bad!!!' } }), 'a'.repeat(9000)]) assert.throws(() => decodePush(request(body)));
+});
