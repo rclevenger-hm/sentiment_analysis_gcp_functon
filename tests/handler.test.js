@@ -13,3 +13,9 @@ test('single analysis authenticates, meters, preserves the response contract and
   assert.match(response.headers['access-control-expose-headers'], /x-request-id/);
   assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
 });
+for (const [body, expected] of [['null', 400], ['[]', 400], ['123', 400], ['{bad', 400], [{ text: 'x', languageCode: false }, 400], [{ text: 'x', languageCode: null }, 400], [{ text: '😀'.repeat(1251) }, 413]]) {
+  test(`invalid request ${JSON.stringify(body).slice(0, 70)} receives a controlled error`, async () => {
+    const f = fixture(); const response = await f.api(event('POST', '/analyze-sentiment', body));
+    assert.equal(response.statusCode, expected); assert.ok(parsed(response).code); assert.equal(f.calls.length, 0);
+  });
+}
