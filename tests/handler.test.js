@@ -29,3 +29,9 @@ test('authentication fails before parsing or metering and caller headers cannot 
   const f = fixture(); const response = await f.api(event('POST', '/analyze-sentiment', '{bad', { requestContext: {}, headers: { 'x-tenant-id': 'alice' } }));
   assert.equal(response.statusCode, 401); assert.equal(f.calls.length, 0); assert.equal(f.items.size, 0);
 });
+test('errors and success telemetry do not log submitted text or upstream secret details', async () => {
+  const f = fixture(); f.analyzer.single = async () => { throw new Error('sensitive internal details'); };
+  const response = await f.api(event('POST', '/analyze-sentiment', { text: 'private customer feedback' }));
+  assert.equal(response.statusCode, 502);
+  assert.doesNotMatch(JSON.stringify(f.logs) + response.body, /private customer|sensitive internal/);
+});
