@@ -19,3 +19,9 @@ for (const [body, expected] of [['null', 400], ['[]', 400], ['123', 400], ['{bad
     assert.equal(response.statusCode, expected); assert.ok(parsed(response).code); assert.equal(f.calls.length, 0);
   });
 }
+test('base64 JSON is decoded and UTF-8 byte limits are respected', async () => {
+  const f = fixture(); const request = event('POST', '/analyze-sentiment', Buffer.from(JSON.stringify({ text: '😀'.repeat(1250) })).toString('base64'), { isBase64Encoded: true });
+  assert.equal((await f.api(request)).statusCode, 200);
+  assert.equal((await f.api({ ...request, body: 'invalid=base64' })).statusCode, 400);
+  assert.equal((await f.api({ ...request, body: Buffer.from([0xff]).toString('base64') })).statusCode, 400);
+});
