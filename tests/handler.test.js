@@ -25,3 +25,7 @@ test('base64 JSON is decoded and UTF-8 byte limits are respected', async () => {
   assert.equal((await f.api({ ...request, body: 'invalid=base64' })).statusCode, 400);
   assert.equal((await f.api({ ...request, body: Buffer.from([0xff]).toString('base64') })).statusCode, 400);
 });
+test('authentication fails before parsing or metering and caller headers cannot choose another tenant', async () => {
+  const f = fixture(); const response = await f.api(event('POST', '/analyze-sentiment', '{bad', { requestContext: {}, headers: { 'x-tenant-id': 'alice' } }));
+  assert.equal(response.statusCode, 401); assert.equal(f.calls.length, 0); assert.equal(f.items.size, 0);
+});
