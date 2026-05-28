@@ -35,3 +35,11 @@ test('errors and success telemetry do not log submitted text or upstream secret 
   assert.equal(response.statusCode, 502);
   assert.doesNotMatch(JSON.stringify(f.logs) + response.body, /private customer|sensitive internal/);
 });
+test('parallel duplicate submissions reserve one allowance and reject reused keys with changed data', async () => {
+  const f = fixture(); const request = event('POST', '/jobs', { records: [{ id: 'one', text: 'good' }] });
+  const responses = await Promise.all([f.api(request), f.api(request)]);
+  assert.deepEqual(responses.map((r) => r.statusCode), [202, 202]);
+  assert.equal(parsed(responses[0]).jobId, parsed(responses[1]).jobId);
+  assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
+  assert.equal((await f.api(event('POST', '/jobs', { records: [{ text: 'different' }] }))).statusCode, 409);
+});
