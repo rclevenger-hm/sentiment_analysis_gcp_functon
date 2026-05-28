@@ -43,3 +43,9 @@ test('parallel duplicate submissions reserve one allowance and reject reused key
   assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
   assert.equal((await f.api(event('POST', '/jobs', { records: [{ text: 'different' }] }))).statusCode, 409);
 });
+test('daily units are charged for targeted operations and block excess before inference', async () => {
+  const f = fixture(2);
+  assert.equal((await f.api(event('POST', '/analyze-sentiment', { text: 'good', targeted: true }))).statusCode, 200);
+  const blocked = await f.api(event('POST', '/analyze-sentiment', { text: 'good' }));
+  assert.equal(blocked.statusCode, 429); assert.ok(Number(blocked.headers['retry-after']) > 0); assert.equal(f.calls.length, 1);
+});
