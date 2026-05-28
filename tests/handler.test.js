@@ -49,3 +49,28 @@ test('daily units are charged for targeted operations and block excess before in
   const blocked = await f.api(event('POST', '/analyze-sentiment', { text: 'good' }));
   assert.equal(blocked.statusCode, 429); assert.ok(Number(blocked.headers['retry-after']) > 0); assert.equal(f.calls.length, 1);
 });
+test('bulk jobs preserve ids and partial failures across checkpoints, history, reports and export', async () => {
+  const f = fixture();
+  const records = Array.from({ length: 28 }, (_, i) => ({ id: `row-${i}`, text: i % 2 ? 'bad delivery' : 'good product', product: 'widget', date: '2026-10-01' }));
+  records[27].text = '';
+  const submission = parsed(await f.api(event('POST', '/jobs', { records, label: 'October' })));
+  assert.equal(submission.processed, 0);
+  await f.tick();
+  let status = parsed(await f.api(event('GET', `/jobs/${submission.jobId}`)));
+  assert.equal(status.processed, 25); assert.equal(status.status, 'QUEUED');
+  await f.tick();
+  status = parsed(await f.api(event('GET', `/jobs/${submission.jobId}`)));
+  assert.equal(status.processed, 28); assert.equal(status.status, 'COMPLETED_WITH_ERRORS');
+  assert.equal(status.summary.failed, 1); assert.equal(f.calls.length, 27);
+  const results = parsed(await f.api(event('GET', `/jobs/${submission.jobId}/results`)));
+  assert.equal(results.records[27].id, 'row-27'); assert.ok(results.records[27].error);
+  const report = parsed(await f.api(event('GET', `/jobs/${submission.jobId}/report`, undefined, { queryStringParameters: { sentiment: 'NEGATIVE', product: 'widget' } })));
+  assert.equal(report.total, 13); assert.equal(report.negativeRate, 1); assert.equal(report.trends[0].date, '2026-10-01');
+  const exported = parsed(await f.api(event('GET', `/jobs/${submission.jobId}/export`, undefined, { queryStringParameters: { format: 'csv' } })));
+  assert.equal(exported.recordCount, 28); assert.equal(exported.expiresInSeconds, 60);
+  assert.match([...f.objects.values()].find((v) => typeof v === 'string'), /row-27/);
+  assert.equal(parsed(await f.api(event('GET', '/history'))).jobs.length, 1);
+  // Duplicate delivery after completion must not make more billable calls.
+  await f.worker.processJob({ tenantId: tenantFrom(event('GET', '/')), jobId: submission.jobId });
+  assert.equal(f.calls.length, 27);
+});
