@@ -92,3 +92,13 @@ test('configurable alert rules link threshold breaches to original record ids an
   assert.equal((await f.api(event('PUT', `/alerts/${job.jobId}/acknowledge`))).statusCode, 200);
   assert.equal(parsed(await f.api(event('GET', '/alerts'))).alerts[0].acknowledged, true);
 });
+test('comparison reports sample rates with a stable baseline and handles in-progress jobs', async () => {
+  const f = fixture();
+  const a = parsed(await f.api(event('POST', '/jobs', { records: [{ text: 'good' }] })));
+  assert.equal((await f.api(event('GET', '/compare', undefined, { queryStringParameters: { current: a.jobId, baseline: a.jobId } }))).statusCode, 409);
+  await f.tick();
+  const b = parsed(await f.api(event('POST', '/jobs', { records: [{ text: 'bad' }] }, { headers: { 'idempotency-key': 'another-key-123' } })));
+  await f.tick();
+  const response = parsed(await f.api(event('GET', '/compare', undefined, { queryStringParameters: { current: b.jobId, baseline: a.jobId } })));
+  assert.equal(response.negativeRateChange, 1); assert.match(response.note, /statistical significance/);
+});
