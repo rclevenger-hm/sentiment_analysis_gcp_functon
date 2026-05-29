@@ -74,3 +74,12 @@ test('bulk jobs preserve ids and partial failures across checkpoints, history, r
   await f.worker.processJob({ tenantId: tenantFrom(event('GET', '/')), jobId: submission.jobId });
   assert.equal(f.calls.length, 27);
 });
+test('job reads, exports, comparison and alert acknowledgement enforce caller isolation', async () => {
+  const f = fixture(); const job = parsed(await f.api(event('POST', '/jobs', { records: [{ text: 'good' }] })));
+  await f.tick();
+  const other = { requestContext: { identity: { issuer: 'https://accounts.google.com', subject: 'bob' } } };
+  for (const path of [`/jobs/${job.jobId}`, `/jobs/${job.jobId}/export`, `/jobs/${job.jobId}/report`]) assert.equal((await f.api(event('GET', path, undefined, other))).statusCode, 404);
+  assert.equal(parsed(await f.api(event('GET', '/history', undefined, other))).jobs.length, 0);
+  assert.equal((await f.api(event('PUT', `/alerts/${job.jobId}/acknowledge`, undefined, other))).statusCode, 404);
+  assert.equal((await f.api(event('GET', '/compare', undefined, { ...other, queryStringParameters: { current: job.jobId, baseline: job.jobId } }))).statusCode, 404);
+});
