@@ -83,3 +83,12 @@ test('job reads, exports, comparison and alert acknowledgement enforce caller is
   assert.equal((await f.api(event('PUT', `/alerts/${job.jobId}/acknowledge`, undefined, other))).statusCode, 404);
   assert.equal((await f.api(event('GET', '/compare', undefined, { ...other, queryStringParameters: { current: job.jobId, baseline: job.jobId } }))).statusCode, 404);
 });
+test('configurable alert rules link threshold breaches to original record ids and support acknowledgement', async () => {
+  const f = fixture();
+  assert.equal((await f.api(event('PUT', '/alert-rule', { enabled: true, minRecords: 2, negativeRate: 0.5, filters: { source: 'support' } }))).statusCode, 200);
+  const job = parsed(await f.api(event('POST', '/jobs', { records: [{ id: 'ticket-1', text: 'bad', source: 'support' }, { id: 'ticket-2', text: 'bad', source: 'support' }, { id: 'review', text: 'good', source: 'reviews' }] })));
+  await f.tick(); const alerts = parsed(await f.api(event('GET', '/alerts'))).alerts;
+  assert.equal(alerts.length, 1); assert.deepEqual(alerts[0].evidenceRecordIds, ['ticket-1', 'ticket-2']);
+  assert.equal((await f.api(event('PUT', `/alerts/${job.jobId}/acknowledge`))).statusCode, 200);
+  assert.equal(parsed(await f.api(event('GET', '/alerts'))).alerts[0].acknowledged, true);
+});
