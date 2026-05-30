@@ -102,3 +102,9 @@ test('comparison reports sample rates with a stable baseline and handles in-prog
   const response = parsed(await f.api(event('GET', '/compare', undefined, { queryStringParameters: { current: b.jobId, baseline: a.jobId } })));
   assert.equal(response.negativeRateChange, 1); assert.match(response.note, /statistical significance/);
 });
+test('worker failures throw for Pub/Sub retry without advancing a checkpoint', async () => {
+  const f = fixture(); const job = parsed(await f.api(event('POST', '/jobs', { records: [{ text: 'good' }] })));
+  f.analyzer.batch = async () => { throw Object.assign(new Error('upstream unavailable'), { name: 'ThrottlingException' }); };
+  await assert.rejects(f.tick(), /upstream unavailable/);
+  assert.equal((await f.store.getJob(tenantFrom(event('GET', '/')), job.jobId)).offset, 0);
+});
