@@ -108,3 +108,10 @@ test('worker failures throw for Pub/Sub retry without advancing a checkpoint', a
   await assert.rejects(f.tick(), /upstream unavailable/);
   assert.equal((await f.store.getJob(tenantFrom(event('GET', '/')), job.jobId)).offset, 0);
 });
+test('unsupported media type and duplicate ids are rejected before reserving usage', async () => {
+  const f = fixture();
+  const a = await f.api(event('POST', '/jobs', 'hello', { headers: { 'content-type': 'application/octet-stream', 'idempotency-key': 'test-key-1234' } }));
+  assert.equal(a.statusCode, 415);
+  const b = await f.api(event('POST', '/jobs', { records: [{ id: 'same', text: 'a' }, { id: 'same', text: 'b' }] }));
+  assert.equal(b.statusCode, 400); assert.equal(f.items.size, 0);
+});
