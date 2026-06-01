@@ -14,3 +14,4 @@ test('bulk validation keeps invalid rows and assigns deterministic missing ids',
   const result = parseBulk(event('POST', '/jobs', { targeted: true, records: [{ text: 'fine' }, null, { id: 'spanish', text: 'hola', languageCode: 'de' }] }));
   assert.equal(result.records[0].id, 'row-1'); assert.ok(result.records[1].error); assert.ok(result.records[2].error);
 });
+test('oversized encoded request is rejected before decoding', () => assert.throws(() => decodeBody({ body: 'a'.repeat(2 * 1024 * 1024), isBase64Encoded: true }), (e) => e.status === 413));
