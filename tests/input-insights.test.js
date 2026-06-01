@@ -10,3 +10,7 @@ test('CSV parser accepts quoted commas, escaped quotes, CRLF, BOM and embedded n
   assert.deepEqual(rows, [{ id: 'one', text: 'Great, but "late"\nagain', source: 'reviews' }]);
 });
 for (const csv of ['text,text\na,b', 'id\na', 'text\n"unclosed', 'text\n"closed"oops', 'text\na,b']) test(`reject malformed CSV ${csv}`, () => assert.throws(() => parseCsv(csv)));
+test('bulk validation keeps invalid rows and assigns deterministic missing ids', () => {
+  const result = parseBulk(event('POST', '/jobs', { targeted: true, records: [{ text: 'fine' }, null, { id: 'spanish', text: 'hola', languageCode: 'de' }] }));
+  assert.equal(result.records[0].id, 'row-1'); assert.ok(result.records[1].error); assert.ok(result.records[2].error);
+});
