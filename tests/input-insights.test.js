@@ -9,3 +9,4 @@ test('CSV parser accepts quoted commas, escaped quotes, CRLF, BOM and embedded n
   const rows = parseCsv('\uFEFFid,text,source\r\none,"Great, but ""late""\nagain",reviews\r\n');
   assert.deepEqual(rows, [{ id: 'one', text: 'Great, but "late"\nagain', source: 'reviews' }]);
 });
+for (const csv of ['text,text\na,b', 'id\na', 'text\n"unclosed', 'text\n"closed"oops', 'text\na,b']) test(`reject malformed CSV ${csv}`, () => assert.throws(() => parseCsv(csv)));
