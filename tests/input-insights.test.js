@@ -19,3 +19,9 @@ test('calendar dates and report filter ranges are validated', () => {
   assert.throws(() => dateOnly('2026-02-30')); assert.equal(dateOnly('2024-02-29'), '2024-02-29');
   assert.throws(() => filtersFrom({ from: '2026-10-02', to: '2026-10-01' })); assert.throws(() => filtersFrom({ minConfidence: 'nonsense' }));
 });
+test('Google issuer and subject scope caller data', () => {
+  const identity = (issuer, subject) => ({ requestContext: { identity: { issuer, subject } } });
+  assert.equal(tenantFrom(identity('one', 'alice')), tenantFrom(identity('one', 'alice')));
+  assert.notEqual(tenantFrom(identity('one', 'alice')), tenantFrom(identity('two', 'alice')));
+  assert.notEqual(tenantFrom(identity('one', 'alice')), tenantFrom(identity('one', 'bob')));
+});
