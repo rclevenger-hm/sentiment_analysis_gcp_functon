@@ -25,3 +25,7 @@ test('Google issuer and subject scope caller data', () => {
   assert.notEqual(tenantFrom(identity('one', 'alice')), tenantFrom(identity('two', 'alice')));
   assert.notEqual(tenantFrom(identity('one', 'alice')), tenantFrom(identity('one', 'bob')));
 });
+test('exports preserve quotes/newlines and neutralize spreadsheet formulas', () => {
+  const csv = csvExport([{ id: '=HYPERLINK("x")', text: '\t=CMD()', source: 'plain', product: 'quoted "widget"' }]);
+  assert.match(csv, /"'=HYPERLINK\(""x""\)"/); assert.match(csv, /"'\t=CMD\(\)"/); assert.match(csv, /quoted ""widget""/);
+});
