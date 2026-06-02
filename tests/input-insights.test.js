@@ -29,3 +29,7 @@ test('exports preserve quotes/newlines and neutralize spreadsheet formulas', () 
   const csv = csvExport([{ id: '=HYPERLINK("x")', text: '\t=CMD()', source: 'plain', product: 'quoted "widget"' }]);
   assert.match(csv, /"'=HYPERLINK\(""x""\)"/); assert.match(csv, /"'\t=CMD\(\)"/); assert.match(csv, /quoted ""widget""/);
 });
+test('empty successful samples do not manufacture rates or trigger alerts', () => {
+  assert.equal(summarize([{ id: 'x', error: {} }], '2026-10-01').negativeRate, null);
+  assert.equal(evaluateRule({ enabled: true, minRecords: 1, negativeRate: 0, filters: {} }, [{ id: 'x', error: {} }], '2026-10-01'), null);
+});
