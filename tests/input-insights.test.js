@@ -15,3 +15,7 @@ test('bulk validation keeps invalid rows and assigns deterministic missing ids',
   assert.equal(result.records[0].id, 'row-1'); assert.ok(result.records[1].error); assert.ok(result.records[2].error);
 });
 test('oversized encoded request is rejected before decoding', () => assert.throws(() => decodeBody({ body: 'a'.repeat(2 * 1024 * 1024), isBase64Encoded: true }), (e) => e.status === 413));
+test('calendar dates and report filter ranges are validated', () => {
+  assert.throws(() => dateOnly('2026-02-30')); assert.equal(dateOnly('2024-02-29'), '2024-02-29');
+  assert.throws(() => filtersFrom({ from: '2026-10-02', to: '2026-10-01' })); assert.throws(() => filtersFrom({ minConfidence: 'nonsense' }));
+});
