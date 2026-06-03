@@ -11,3 +11,9 @@ function setup(config = {}) {
   const job = (name = 'one', tenantId = 'alice') => ({ tenantId, key: `JOB#${hash(name)}`, jobId: hash(name), inputKey: `${tenantId}/input.json`, fingerprint: name, status: 'QUEUED', offset: 0, total: 2, expiresAt: store.expiry(), createdAt: time.toISOString(), updatedAt: time.toISOString(), collectionId: `${tenantId}#jobs` });
   return { ...db, ...blob, store, job, sent, advance: (seconds) => { time = new Date(time.getTime() + seconds * 1000); } };
 }
+test('parallel identical jobs create one row and charge once in Firestore transaction', async () => {
+  const f = setup(); const results = await Promise.all(Array.from({ length: 6 }, () => f.store.createJob(f.job(), 2)));
+  assert.equal(results.filter((r) => r.created).length, 1);
+  assert.equal((await f.store.usage('alice')).units, 2);
+  assert.equal([...f.records.values()].filter((r) => r.status).length, 1);
+});
