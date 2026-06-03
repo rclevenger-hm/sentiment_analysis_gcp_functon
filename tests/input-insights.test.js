@@ -33,3 +33,8 @@ test('empty successful samples do not manufacture rates or trigger alerts', () =
   assert.equal(summarize([{ id: 'x', error: {} }], '2026-10-01').negativeRate, null);
   assert.equal(evaluateRule({ enabled: true, minRecords: 1, negativeRate: 0, filters: {} }, [{ id: 'x', error: {} }], '2026-10-01'), null);
 });
+
+test('published alert-rule example uses valid native Google filters', () => {
+  const { validateRule } = require('../src/insights');
+  assert.doesNotThrow(() => validateRule(require('../examples/alert-rule.json')));
+});
