@@ -31,3 +31,7 @@ test('concurrent single reservations cannot exceed quota', async () => {
   assert.equal(result.filter((r) => r.status === 'fulfilled').length, 3);
   assert.equal((await f.store.usage('alice')).units, 3);
 });
+test('usage resets at UTC midnight and remains isolated by tenant', async () => {
+  const f = setup({ DAILY_ANALYSIS_LIMIT: 1 }); await f.store.reserveUsage('alice', 1); await f.store.reserveUsage('bob', 1);
+  f.advance(86400); assert.equal((await f.store.usage('alice')).units, 0); await f.store.reserveUsage('alice', 1);
+});
