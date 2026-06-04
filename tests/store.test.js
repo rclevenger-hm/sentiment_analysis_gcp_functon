@@ -17,3 +17,11 @@ test('parallel identical jobs create one row and charge once in Firestore transa
   assert.equal((await f.store.usage('alice')).units, 2);
   assert.equal([...f.records.values()].filter((r) => r.status).length, 1);
 });
+test('competing jobs at quota cannot overdraw and rejected transaction leaves no job', async () => {
+  const f = setup({ DAILY_ANALYSIS_LIMIT: 3 });
+  const results = await Promise.allSettled([f.store.createJob(f.job('a'), 2), f.store.createJob(f.job('b'), 2)]);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(results.find((r) => r.status === 'rejected').reason.status, 429);
+  assert.equal((await f.store.usage('alice')).units, 2);
+  assert.equal([...f.records.values()].filter((r) => r.status).length, 1);
+});
