@@ -25,3 +25,9 @@ test('competing jobs at quota cannot overdraw and rejected transaction leaves no
   assert.equal((await f.store.usage('alice')).units, 2);
   assert.equal([...f.records.values()].filter((r) => r.status).length, 1);
 });
+test('concurrent single reservations cannot exceed quota', async () => {
+  const f = setup({ DAILY_ANALYSIS_LIMIT: 3 });
+  const result = await Promise.allSettled(Array.from({ length: 6 }, () => f.store.reserveUsage('alice', 1)));
+  assert.equal(result.filter((r) => r.status === 'fulfilled').length, 3);
+  assert.equal((await f.store.usage('alice')).units, 3);
+});
