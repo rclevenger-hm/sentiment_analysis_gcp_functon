@@ -35,3 +35,10 @@ test('usage resets at UTC midnight and remains isolated by tenant', async () => 
   const f = setup({ DAILY_ANALYSIS_LIMIT: 1 }); await f.store.reserveUsage('alice', 1); await f.store.reserveUsage('bob', 1);
   f.advance(86400); assert.equal((await f.store.usage('alice')).units, 0); await f.store.reserveUsage('alice', 1);
 });
+test('per-minute rate limit is atomic and rolls over independently of daily quota', async () => {
+  const f = setup({ REQUESTS_PER_MINUTE: 2 });
+  const results = await Promise.allSettled(Array.from({ length: 4 }, () => f.store.reserveRequest('alice')));
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 2);
+  assert.equal(results.find((r) => r.status === 'rejected').reason.code, 'RATE_LIMIT_EXCEEDED');
+  f.advance(60); await f.store.reserveRequest('alice'); assert.equal((await f.store.usage('alice')).units, 0);
+});
