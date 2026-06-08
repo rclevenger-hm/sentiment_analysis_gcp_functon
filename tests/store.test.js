@@ -42,3 +42,7 @@ test('per-minute rate limit is atomic and rolls over independently of daily quot
   assert.equal(results.find((r) => r.status === 'rejected').reason.code, 'RATE_LIMIT_EXCEEDED');
   f.advance(60); await f.store.reserveRequest('alice'); assert.equal((await f.store.usage('alice')).units, 0);
 });
+test('backend outages remain unavailable rather than being reported as quota errors', async () => {
+  const f = setup(); f.db.failCommit = true;
+  await assert.rejects(f.store.reserveUsage('alice', 1), (e) => e.code === 14);
+});
