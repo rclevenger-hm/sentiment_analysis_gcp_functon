@@ -46,3 +46,9 @@ test('backend outages remain unavailable rather than being reported as quota err
   const f = setup(); f.db.failCommit = true;
   await assert.rejects(f.store.reserveUsage('alice', 1), (e) => e.code === 14);
 });
+test('expired rows are unreadable before asynchronous TTL cleanup', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 1); f.advance(31 * 86400);
+  assert.equal(await f.store.get('alice', f.job().key), null);
+  await assert.rejects(f.store.getJob('alice', f.job().jobId), (e) => e.status === 404);
+  await assert.rejects(f.store.createJob(f.job(), 1), (e) => e.code === 'EXPIRED_KEY');
+});
