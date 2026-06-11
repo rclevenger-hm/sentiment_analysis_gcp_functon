@@ -52,3 +52,10 @@ test('expired rows are unreadable before asynchronous TTL cleanup', async () => 
   await assert.rejects(f.store.getJob('alice', f.job().jobId), (e) => e.status === 404);
   await assert.rejects(f.store.createJob(f.job(), 1), (e) => e.code === 'EXPIRED_KEY');
 });
+test('only one worker claims a job and an expired lease can be reclaimed', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 2);
+  const claims = await Promise.all([f.store.claim('alice', f.job().jobId), f.store.claim('alice', f.job().jobId)]);
+  assert.equal(claims.filter(Boolean).length, 1); f.advance(241);
+  const replacement = await f.store.claim('alice', f.job().jobId);
+  assert.notEqual(replacement.leaseToken, claims.find(Boolean).leaseToken);
+});
