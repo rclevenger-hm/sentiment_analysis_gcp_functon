@@ -59,3 +59,14 @@ test('only one worker claims a job and an expired lease can be reclaimed', async
   const replacement = await f.store.claim('alice', f.job().jobId);
   assert.notEqual(replacement.leaseToken, claims.find(Boolean).leaseToken);
 });
+test('stale worker cannot commit result pointers, status, or alerts after lease replacement', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 2); const stale = await f.store.claim('alice', f.job().jobId);
+  f.advance(241); const current = await f.store.claim('alice', f.job().jobId);
+  await f.store.putObject('new', [{ id: 'winner' }]);
+  await f.store.checkpoint(current, 2, { failed: 0 }, 'new', { type: 'test' });
+  await f.store.putObject('old', [{ id: 'stale' }]);
+  await assert.rejects(f.store.checkpoint(stale, 2, { failed: 0 }, 'old', { type: 'bad' }), (e) => e.code === 'LEASE_LOST');
+  const finished = await f.store.getJob('alice', f.job().jobId);
+  assert.deepEqual(await f.store.results(finished), [{ id: 'winner' }]);
+  assert.equal((await f.store.get('alice', `ALERT#${finished.jobId}`)).alert.type, 'test');
+});
