@@ -74,3 +74,10 @@ test('checkpoint rejects an expired lease even before another worker claims', as
   const f = setup(); await f.store.createJob(f.job(), 2); const job = await f.store.claim('alice', f.job().jobId);
   f.advance(241); await assert.rejects(f.store.checkpoint(job, 2, {}, 'part'), (e) => e.code === 'LEASE_LOST');
 });
+test('five failed claims reach a terminal state and preserve unprocessed record failures', async () => {
+  const f = setup(); const job = f.job(); await f.store.createJob(job, 2); await f.store.putObject(job.inputKey, { records: [{ id: 'a' }, { id: 'b' }] });
+  for (let i = 0; i < 5; i++) { assert.ok(await f.store.claim('alice', job.jobId)); f.advance(241); }
+  assert.equal(await f.store.claim('alice', job.jobId), null);
+  const failed = await f.store.getJob('alice', job.jobId); assert.equal(failed.status, 'FAILED');
+  assert.deepEqual((await f.store.results(failed)).map((r) => r.error.code), ['JOB_FAILED', 'JOB_FAILED']);
+});
