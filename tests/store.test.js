@@ -70,3 +70,7 @@ test('stale worker cannot commit result pointers, status, or alerts after lease 
   assert.deepEqual(await f.store.results(finished), [{ id: 'winner' }]);
   assert.equal((await f.store.get('alice', `ALERT#${finished.jobId}`)).alert.type, 'test');
 });
+test('checkpoint rejects an expired lease even before another worker claims', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 2); const job = await f.store.claim('alice', f.job().jobId);
+  f.advance(241); await assert.rejects(f.store.checkpoint(job, 2, {}, 'part'), (e) => e.code === 'LEASE_LOST');
+});
