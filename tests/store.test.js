@@ -81,3 +81,8 @@ test('five failed claims reach a terminal state and preserve unprocessed record 
   const failed = await f.store.getJob('alice', job.jobId); assert.equal(failed.status, 'FAILED');
   assert.deepEqual((await f.store.results(failed)).map((r) => r.error.code), ['JOB_FAILED', 'JOB_FAILED']);
 });
+test('checkpoint retries reset attempts so long jobs are not capped at five parts', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 2); const job = await f.store.claim('alice', f.job().jobId);
+  await f.store.checkpoint(job, 1, undefined, 'one');
+  const next = await f.store.claim('alice', job.jobId); assert.equal(next.attempts, 1); assert.equal(next.offset, 1);
+});
