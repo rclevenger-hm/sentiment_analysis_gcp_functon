@@ -86,3 +86,9 @@ test('checkpoint retries reset attempts so long jobs are not capped at five part
   await f.store.checkpoint(job, 1, undefined, 'one');
   const next = await f.store.claim('alice', job.jobId); assert.equal(next.attempts, 1); assert.equal(next.offset, 1);
 });
+test('history pagination is tenant scoped and bound to filters', async () => {
+  const f = setup(); await f.store.createJob(f.job('one'), 1); f.advance(1); await f.store.createJob(f.job('two'), 1); await f.store.createJob(f.job('other', 'bob'), 1);
+  const page = await f.store.list('alice', 'jobs', { limit: 1 }); assert.equal(page.items.length, 1); assert.ok(page.nextCursor);
+  assert.equal((await f.store.list('alice', 'jobs', { limit: 1, cursor: page.nextCursor })).items.length, 1);
+  for (const [tenant, collection, options] of [['bob', 'jobs', {}], ['alice', 'alerts', {}], ['alice', 'jobs', { status: 'FAILED' }]]) await assert.rejects(f.store.list(tenant, collection, { cursor: page.nextCursor, ...options }), (e) => e.status === 400);
+});
