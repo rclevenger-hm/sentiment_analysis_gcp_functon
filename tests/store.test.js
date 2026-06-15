@@ -92,3 +92,8 @@ test('history pagination is tenant scoped and bound to filters', async () => {
   assert.equal((await f.store.list('alice', 'jobs', { limit: 1, cursor: page.nextCursor })).items.length, 1);
   for (const [tenant, collection, options] of [['bob', 'jobs', {}], ['alice', 'alerts', {}], ['alice', 'jobs', { status: 'FAILED' }]]) await assert.rejects(f.store.list(tenant, collection, { cursor: page.nextCursor, ...options }), (e) => e.status === 400);
 });
+test('recovery only requeues old unfinished work and persists continuation state', async () => {
+  const f = setup(); const job = f.job(); await f.store.createJob(job, 2); await f.store.recover(); assert.equal(f.sent.length, 0);
+  f.advance(901); await f.store.recover(); assert.equal(f.sent.length, 1);
+  const state = await f.store.claimRecovery(); await f.store.saveRecoveryCursor('token', state.leaseToken); assert.equal((await f.store.get('system-recovery', 'RECOVERY#cursor')).cursor, 'token');
+});
