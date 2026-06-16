@@ -116,3 +116,8 @@ test('immutable storage accepts identical retries and rejects changed content', 
   await assert.rejects(f.store.putObject('one', { text: 'changed' }), /Immutable/);
   assert.deepEqual(await f.store.getObject('one'), { text: 'original' });
 });
+test('exports request a read-only V4 URL expiring in sixty seconds', async () => {
+  const f = setup(); const url = await f.store.exportFile('export.csv', 'id,text', 'csv');
+  assert.match(url, /^https:/); assert.equal(f.signing[0].action, 'read'); assert.equal(f.signing[0].version, 'v4');
+  assert.equal(f.signing[0].expires.toISOString(), '2026-09-01T10:01:00.000Z');
+});
