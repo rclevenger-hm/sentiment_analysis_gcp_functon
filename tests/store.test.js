@@ -111,3 +111,8 @@ test('transaction failure rolls back job creation and usage together', async () 
   f.db.failCommit = false; await f.store.createJob(f.job(), 2);
   assert.equal((await f.store.usage('alice')).units, 2);
 });
+test('immutable storage accepts identical retries and rejects changed content', async () => {
+  const f = setup(); await f.store.putObject('one', { text: 'original' }); await f.store.putObject('one', { text: 'original' });
+  await assert.rejects(f.store.putObject('one', { text: 'changed' }), /Immutable/);
+  assert.deepEqual(await f.store.getObject('one'), { text: 'original' });
+});
