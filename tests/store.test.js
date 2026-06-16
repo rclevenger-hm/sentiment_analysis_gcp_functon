@@ -104,3 +104,10 @@ test('alert acknowledgement never reopens an acknowledged alert', async () => {
   assert.equal((await f.store.get('alice', `ALERT#${job.jobId}`)).acknowledged, true);
   await assert.rejects(f.store.acknowledge('bob', job.jobId), (e) => e.status === 404);
 });
+test('transaction failure rolls back job creation and usage together', async () => {
+  const f = setup(); f.db.failCommit = true;
+  await assert.rejects(f.store.createJob(f.job(), 2), /Backend unavailable/);
+  assert.equal(f.records.size, 0);
+  f.db.failCommit = false; await f.store.createJob(f.job(), 2);
+  assert.equal((await f.store.usage('alice')).units, 2);
+});
