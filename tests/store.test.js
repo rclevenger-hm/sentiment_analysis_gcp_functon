@@ -97,3 +97,10 @@ test('recovery only requeues old unfinished work and persists continuation state
   f.advance(901); await f.store.recover(); assert.equal(f.sent.length, 1);
   const state = await f.store.claimRecovery(); await f.store.saveRecoveryCursor('token', state.leaseToken); assert.equal((await f.store.get('system-recovery', 'RECOVERY#cursor')).cursor, 'token');
 });
+test('alert acknowledgement never reopens an acknowledged alert', async () => {
+  const f = setup(); await f.store.createJob(f.job(), 2); const job = await f.store.claim('alice', f.job().jobId);
+  await f.store.checkpoint(job, 2, { failed: 0 }, 'part', { type: 'threshold' });
+  await f.store.acknowledge('alice', job.jobId); await f.store.acknowledge('alice', job.jobId);
+  assert.equal((await f.store.get('alice', `ALERT#${job.jobId}`)).acknowledged, true);
+  await assert.rejects(f.store.acknowledge('bob', job.jobId), (e) => e.status === 404);
+});
