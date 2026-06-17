@@ -121,3 +121,9 @@ test('exports request a read-only V4 URL expiring in sixty seconds', async () =>
   assert.match(url, /^https:/); assert.equal(f.signing[0].action, 'read'); assert.equal(f.signing[0].version, 'v4');
   assert.equal(f.signing[0].expires.toISOString(), '2026-09-01T10:01:00.000Z');
 });
+test('recovery lease prevents overlapping scans and fences stale cursor updates', async () => {
+  const f = setup(); const first = await f.store.claimRecovery(); assert.equal(await f.store.claimRecovery(), null);
+  f.advance(181); const next = await f.store.claimRecovery(); assert.notEqual(first.leaseToken, next.leaseToken);
+  await assert.rejects(f.store.saveRecoveryCursor('stale', first.leaseToken), (e) => e.code === 'LEASE_LOST');
+  await f.store.saveRecoveryCursor('next', next.leaseToken, true); assert.ok(await f.store.claimRecovery());
+});
