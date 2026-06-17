@@ -127,3 +127,9 @@ test('recovery lease prevents overlapping scans and fences stale cursor updates'
   await assert.rejects(f.store.saveRecoveryCursor('stale', first.leaseToken), (e) => e.code === 'LEASE_LOST');
   await f.store.saveRecoveryCursor('next', next.leaseToken, true); assert.ok(await f.store.claimRecovery());
 });
+test('history skips expired rows but still supplies a usable continuation', async () => {
+  const f = setup(); await f.store.createJob(f.job('old'), 1); f.advance(1);
+  const expiring = { ...f.job('new'), expiresAt: Date.parse('2026-09-01T10:00:02Z') / 1000 }; await f.store.createJob(expiring, 1); f.advance(2);
+  const page = await f.store.list('alice', 'jobs', { limit: 1 }); assert.equal(page.items.length, 0); assert.ok(page.nextCursor);
+  assert.equal((await f.store.list('alice', 'jobs', { limit: 1, cursor: page.nextCursor })).items.length, 1);
+});
