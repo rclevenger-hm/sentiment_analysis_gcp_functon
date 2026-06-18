@@ -17,3 +17,10 @@ test('failed enqueue leaves durable job available for idempotent resubmission', 
   assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
   await f.tick(); assert.equal(f.calls.length, 1);
 });
+test('failed final checkpoint never publishes an alert independently', async () => {
+  const f = fixture(); await f.api(event('PUT', '/alert-rule', { enabled: true, minRecords: 1, negativeRate: 0.5 }));
+  await f.api(event('POST', '/jobs', { records: [{ text: 'bad' }] }));
+  f.store.checkpoint = async () => { throw new Error('transaction failed'); };
+  await assert.rejects(f.tick(), /transaction failed/);
+  const response = await f.api(event('GET', '/alerts')); assert.equal(JSON.parse(response.body).alerts.length, 0);
+});
