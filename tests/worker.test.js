@@ -24,3 +24,8 @@ test('failed final checkpoint never publishes an alert independently', async () 
   await assert.rejects(f.tick(), /transaction failed/);
   const response = await f.api(event('GET', '/alerts')); assert.equal(JSON.parse(response.body).alerts.length, 0);
 });
+test('recovery resumes saved cursor and bounds each timer execution', async () => {
+  const scanned = [], saved = []; let count = 0;
+  const worker = createWorker({ store: { async claimRecovery() { return { cursor: 'resume', leaseToken: 'owner' }; }, async recover(cursor) { scanned.push(cursor); return `page-${++count}`; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
+  await worker.recover(); assert.equal(scanned[0], 'resume'); assert.equal(scanned.length, 20); assert.equal(saved.at(-1), 'page-20');
+});
