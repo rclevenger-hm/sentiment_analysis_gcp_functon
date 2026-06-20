@@ -29,3 +29,7 @@ test('recovery resumes saved cursor and bounds each timer execution', async () =
   const worker = createWorker({ store: { async claimRecovery() { return { cursor: 'resume', leaseToken: 'owner' }; }, async recover(cursor) { scanned.push(cursor); return `page-${++count}`; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
   await worker.recover(); assert.equal(scanned[0], 'resume'); assert.equal(scanned.length, 20); assert.equal(saved.at(-1), 'page-20');
 });
+test('completed recovery scan clears cursor for the next full pass', async () => {
+  const saved = []; const worker = createWorker({ store: { async claimRecovery() { return { cursor: null, leaseToken: 'owner' }; }, async recover() { return undefined; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
+  await worker.recover(); assert.deepEqual(saved, [undefined, undefined]);
+});
