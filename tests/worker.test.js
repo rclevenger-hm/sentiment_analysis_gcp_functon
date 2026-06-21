@@ -33,3 +33,7 @@ test('completed recovery scan clears cursor for the next full pass', async () =>
   const saved = []; const worker = createWorker({ store: { async claimRecovery() { return { cursor: null, leaseToken: 'owner' }; }, async recover() { return undefined; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
   await worker.recover(); assert.deepEqual(saved, [undefined, undefined]);
 });
+test('request rate rejection returns a minute rather than daily Retry-After', async () => {
+  const f = fixture(); const { HttpError } = require('../src/input'); f.store.reserveRequest = async () => { throw new HttpError(429, 'RATE_LIMIT_EXCEEDED', 'Rate limited'); };
+  const response = await f.api(event('GET', '/usage')); assert.equal(response.statusCode, 429); assert.equal(response.headers['retry-after'], '60');
+});
