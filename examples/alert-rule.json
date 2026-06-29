@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "minRecords": 5,
+  "negativeRate": 0.6,
+  "filters": {
+    "source": "support",
+    "minMagnitude": 0.2
+  }
+}
