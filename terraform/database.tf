@@ -63,3 +63,20 @@ resource "google_firestore_index" "status_history" {
     order      = "DESCENDING"
   }
 }
+resource "google_firestore_index" "recovery" {
+  project    = var.project_id
+  database   = google_firestore_database.data.name
+  collection = "items"
+  fields {
+    field_path = "status"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "updatedAt"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "__name__"
+    order      = "ASCENDING"
+  }
+}
