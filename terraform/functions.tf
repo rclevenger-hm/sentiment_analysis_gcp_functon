@@ -45,3 +45,9 @@ resource "google_cloud_run_service_iam_member" "push" {
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.push.email}"
 }
+resource "google_cloud_run_service_iam_member" "scheduler" {
+  location = var.region
+  service  = google_cloudfunctions2_function.service["recovery"].name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.scheduler.email}"
+}
