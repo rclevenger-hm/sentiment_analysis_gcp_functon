@@ -4,3 +4,4 @@ resource "google_service_account" "runtime" {
   display_name = "Sentiment ${each.key} runtime"
 }
 resource "google_service_account" "build" { account_id = "${local.prefix}-build" }
+resource "google_service_account" "push" { account_id = "${local.prefix}-push" }
