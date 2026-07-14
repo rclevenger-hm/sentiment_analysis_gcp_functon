@@ -39,3 +39,8 @@ resource "google_storage_bucket_iam_member" "objects" {
   role     = google_project_iam_custom_role.objects.name
   member   = "serviceAccount:${google_service_account.runtime[each.key].email}"
 }
+resource "google_project_iam_custom_role" "signer" {
+  role_id     = "${replace(local.prefix, "-", "_")}_signer"
+  title       = "Sentiment export signing"
+  permissions = ["iam.serviceAccounts.signBlob"]
+}
