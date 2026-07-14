@@ -33,3 +33,9 @@ resource "google_project_iam_custom_role" "objects" {
   title       = "Sentiment immutable object access"
   permissions = ["storage.objects.create", "storage.objects.get"]
 }
+resource "google_storage_bucket_iam_member" "objects" {
+  for_each = toset(["api", "worker"])
+  bucket   = google_storage_bucket.data.name
+  role     = google_project_iam_custom_role.objects.name
+  member   = "serviceAccount:${google_service_account.runtime[each.key].email}"
+}
