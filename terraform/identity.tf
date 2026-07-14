@@ -28,3 +28,8 @@ resource "google_storage_bucket_iam_member" "build_source" {
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${google_service_account.build.email}"
 }
+resource "google_project_iam_custom_role" "objects" {
+  role_id     = "${replace(local.prefix, "-", "_")}_objects"
+  title       = "Sentiment immutable object access"
+  permissions = ["storage.objects.create", "storage.objects.get"]
+}
