@@ -44,3 +44,8 @@ resource "google_project_iam_custom_role" "signer" {
   title       = "Sentiment export signing"
   permissions = ["iam.serviceAccounts.signBlob"]
 }
+resource "google_service_account_iam_member" "signer" {
+  service_account_id = google_service_account.runtime["api"].name
+  role               = google_project_iam_custom_role.signer.name
+  member             = "serviceAccount:${google_service_account.runtime["api"].email}"
+}
