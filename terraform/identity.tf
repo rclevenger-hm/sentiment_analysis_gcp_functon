@@ -49,3 +49,9 @@ resource "google_service_account_iam_member" "signer" {
   role               = google_project_iam_custom_role.signer.name
   member             = "serviceAccount:${google_service_account.runtime["api"].email}"
 }
+resource "google_pubsub_topic_iam_member" "publisher" {
+  for_each = local.runtime_names
+  topic    = google_pubsub_topic.jobs.name
+  role     = "roles/pubsub.publisher"
+  member   = "serviceAccount:${google_service_account.runtime[each.key].email}"
+}
