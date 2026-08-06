@@ -1,0 +1,10 @@
+project_id                = "your-dedicated-project"
+name                      = "sentiment"
+environment               = "dev"
+region                    = "us-central1"
+firestore_location        = "us-central1"
+consumer_service_accounts = ["consumer@your-dedicated-project.iam.gserviceaccount.com"]
+notification_email        = "owner@example.com"
+billing_account           = "000000-000000-000000"
+monthly_budget            = 100
+budget_currency           = "USD"
