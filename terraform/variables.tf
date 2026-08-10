@@ -29,3 +29,10 @@ variable "firestore_location" {
   type    = string
   default = "us-central1"
 }
+variable "consumer_service_accounts" {
+  type = set(string)
+  validation {
+    condition     = length(var.consumer_service_accounts) > 0 && alltrue([for email in var.consumer_service_accounts : can(regex("^[a-zA-Z0-9._-]+@[a-z0-9-]+\\.iam\\.gserviceaccount\\.com$", email))])
+    error_message = "Provide at least one explicit consumer service-account email; no public principals."
+  }
+}
