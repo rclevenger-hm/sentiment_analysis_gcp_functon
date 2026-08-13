@@ -66,3 +66,11 @@ variable "budget_currency" {
     error_message = "Use the billing account ISO currency code."
   }
 }
+variable "daily_analysis_limit" {
+  type    = number
+  default = 1000
+  validation {
+    condition     = var.daily_analysis_limit >= 1 && var.daily_analysis_limit <= 100000 && floor(var.daily_analysis_limit) == var.daily_analysis_limit
+    error_message = "Daily limit must be an integer from 1 to 100000."
+  }
+}
