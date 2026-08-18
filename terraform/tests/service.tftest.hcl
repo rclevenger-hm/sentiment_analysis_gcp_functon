@@ -39,3 +39,8 @@ run "reject_unbounded_quota" {
   variables { daily_analysis_limit = -1 }
   expect_failures = [var.daily_analysis_limit]
 }
+run "reject_public_consumers" {
+  command = plan
+  variables { consumer_service_accounts = ["allUsers"] }
+  expect_failures = [var.consumer_service_accounts]
+}
