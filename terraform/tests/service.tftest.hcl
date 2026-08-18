@@ -34,3 +34,8 @@ run "secure_defaults" {
     error_message = "Application audience must match the canonical function endpoint."
   }
 }
+run "reject_unbounded_quota" {
+  command = plan
+  variables { daily_analysis_limit = -1 }
+  expect_failures = [var.daily_analysis_limit]
+}
