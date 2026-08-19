@@ -1,0 +1,2025 @@
+openapi: 3.0.3
+info:
+  title: Google Cloud Sentiment Analysis Service
+  version: 1.0.0
+  description: Authenticated Google Cloud functions for native polarity/magnitude
+    analysis, derived labels, entity evidence, bulk jobs, reports and alerts.
+servers:
+  - url: https://{region}-{project}.cloudfunctions.net/{functionName}
+    variables:
+      region:
+        default: us-central1
+      project:
+        default: YOUR_PROJECT
+      functionName:
+        default: sentiment-dev-api
+security:
+  - bearerAuth: []
+paths:
+  /analyze-sentiment:
+    post:
+      operationId: analyzeSentiment
+      summary: Analyze one text without retained history
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SingleRequest"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sentiment"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /jobs:
+    post:
+      operationId: submitJob
+      summary: Submit an idempotent CSV or JSON job
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{8,128}$
+        - name: targeted
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: CSV only; JSON uses the body field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkRequest"
+          text/csv:
+            schema:
+              type: string
+            example: |
+              id,text,source
+              review-1,Great product,reviews
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "202":
+          description: Accepted or existing unfinished job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /jobs/{jobId}:
+    get:
+      operationId: getJob
+      summary: Get progress and summary
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /jobs/{jobId}/results:
+    get:
+      operationId: getResults
+      summary: Get checkpointed records and per-record errors
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+        - name: sentiment
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - POSITIVE
+              - NEGATIVE
+              - NEUTRAL
+              - MIXED
+          description: ""
+        - name: product
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: languageCode
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: maxScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: minMagnitude
+          in: query
+          schema:
+            type: number
+            minimum: 0
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 200
+            default: 0
+          description: ""
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: ""
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Results"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /jobs/{jobId}/report:
+    get:
+      operationId: getReport
+      summary: Get filtered trends and traceable entity concerns
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+        - name: sentiment
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - POSITIVE
+              - NEGATIVE
+              - NEUTRAL
+              - MIXED
+          description: ""
+        - name: product
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: languageCode
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: maxScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: minMagnitude
+          in: query
+          schema:
+            type: number
+            minimum: 0
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /jobs/{jobId}/export:
+    get:
+      operationId: exportJob
+      summary: Create a download URL valid for 60 seconds
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+        - name: sentiment
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - POSITIVE
+              - NEGATIVE
+              - NEUTRAL
+              - MIXED
+          description: ""
+        - name: product
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: languageCode
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: maxScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: minMagnitude
+          in: query
+          schema:
+            type: number
+            minimum: 0
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - csv
+              - json
+            default: json
+          description: ""
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Export"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /history:
+    get:
+      operationId: history
+      summary: List caller-owned jobs newest first
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - QUEUED
+              - RUNNING
+              - COMPLETED
+              - COMPLETED_WITH_ERRORS
+              - FAILED
+          description: ""
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: ""
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/History"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /compare:
+    get:
+      operationId: compare
+      summary: Compare finished job samples
+      parameters:
+        - name: current
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ""
+        - name: baseline
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ""
+        - name: sentiment
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - POSITIVE
+              - NEGATIVE
+              - NEUTRAL
+              - MIXED
+          description: ""
+        - name: product
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: languageCode
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: ""
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: maxScore
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+        - name: minMagnitude
+          in: query
+          schema:
+            type: number
+            minimum: 0
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comparison"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /usage:
+    get:
+      operationId: usage
+      summary: Get accepted analysis allowance for the current UTC day
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usage"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /alert-rule:
+    get:
+      operationId: getAlertRule
+      summary: Get the current rule
+      parameters: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertRule"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: setAlertRule
+      summary: Replace the rule used when future jobs finish
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertRule"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertRule"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /alerts:
+    get:
+      operationId: alerts
+      summary: List threshold alerts and source record IDs
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: ""
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ""
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alerts"
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /alerts/{jobId}/acknowledge:
+    put:
+      operationId: acknowledgeAlert
+      summary: Acknowledge a caller-owned alert
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  acknowledged:
+                    type: boolean
+        "400":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Request rejected or service unavailable; gateway errors can use a
+            gateway-managed body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Google ID token with canonical function audience and an explicitly
+        allowed service-account email. Send the same token in
+        X-Serverless-Authorization for platform IAM.
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        requestId:
+          type: string
+    SingleRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          minLength: 1
+          description: Maximum 5000 UTF-8 bytes; no silent truncation.
+        languageCode:
+          type: string
+          enum:
+            - ar
+            - de
+            - en
+            - es
+            - fr
+            - it
+            - ja
+            - ko
+            - pt
+            - zh
+            - zh-TW
+            - zh-Hant
+            - nl
+            - id
+            - th
+            - tr
+            - vi
+          default: en
+        targeted:
+          type: boolean
+          default: false
+          description: English, Spanish or Japanese.
+    Record:
+      type: object
+      required:
+        - text
+      properties:
+        id:
+          type: string
+          maxLength: 128
+        text:
+          type: string
+          minLength: 1
+          description: Maximum 5000 UTF-8 bytes; no silent truncation.
+        languageCode:
+          type: string
+          enum:
+            - ar
+            - de
+            - en
+            - es
+            - fr
+            - it
+            - ja
+            - ko
+            - pt
+            - zh
+            - zh-TW
+            - zh-Hant
+            - nl
+            - id
+            - th
+            - tr
+            - vi
+          default: en
+        date:
+          type: string
+          format: date
+        product:
+          type: string
+          maxLength: 120
+        source:
+          type: string
+          maxLength: 120
+    BulkRequest:
+      type: object
+      required:
+        - records
+      properties:
+        label:
+          type: string
+          maxLength: 120
+        targeted:
+          type: boolean
+          default: false
+        records:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/Record"
+      description: Maximum total body size is 1 MiB. Invalid rows become record
+        errors; duplicate IDs reject the submission.
+    Sentiment:
+      type: object
+      required:
+        - sentiment
+        - score
+        - magnitude
+        - labelPolicy
+      properties:
+        sentiment:
+          type: string
+          enum:
+            - POSITIVE
+            - NEGATIVE
+            - NEUTRAL
+            - MIXED
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entity"
+        entitiesTruncated:
+          type: boolean
+        offsetEncoding:
+          type: string
+          enum:
+            - UTF16
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        magnitude:
+          type: number
+          minimum: 0
+        labelPolicy:
+          type: string
+          enum:
+            - sentence-polarity-v1
+        languageCode:
+          type: string
+    Entity:
+      type: object
+      properties:
+        truncated:
+          type: boolean
+        mentions:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              type:
+                type: string
+              sentiment:
+                type: string
+              beginOffset:
+                type: integer
+              endOffset:
+                type: integer
+              excerpt:
+                type: string
+                maxLength: 240
+              score:
+                type: number
+                minimum: -1
+                maximum: 1
+              magnitude:
+                type: number
+                minimum: 0
+        name:
+          type: string
+          maxLength: 160
+        salience:
+          type: number
+          minimum: 0
+          maximum: 1
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        magnitude:
+          type: number
+          minimum: 0
+    Result:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 128
+        text:
+          type: string
+          minLength: 1
+          description: Maximum 5000 UTF-8 bytes; no silent truncation.
+        languageCode:
+          type: string
+          enum:
+            - ar
+            - de
+            - en
+            - es
+            - fr
+            - it
+            - ja
+            - ko
+            - pt
+            - zh
+            - zh-TW
+            - zh-Hant
+            - nl
+            - id
+            - th
+            - tr
+            - vi
+          default: en
+        date:
+          type: string
+          format: date
+        product:
+          type: string
+          maxLength: 120
+        source:
+          type: string
+          maxLength: 120
+        sentiment:
+          type: string
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entity"
+        entitiesTruncated:
+          type: boolean
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        insightsError:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        magnitude:
+          type: number
+          minimum: 0
+        labelPolicy:
+          type: string
+          enum:
+            - sentence-polarity-v1
+        offsetEncoding:
+          type: string
+          enum:
+            - UTF16
+    Summary:
+      type: object
+      properties:
+        total:
+          type: integer
+        analyzed:
+          type: integer
+        failed:
+          type: integer
+        insightFailures:
+          type: integer
+        counts:
+          type: object
+          additionalProperties:
+            type: integer
+        negativeRate:
+          type: number
+          nullable: true
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              total:
+                type: integer
+              negative:
+                type: integer
+              negativeRate:
+                type: number
+        concerns:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              records:
+                type: integer
+              negative:
+                type: integer
+              evidence:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    recordId:
+                      type: string
+                    sentiment:
+                      type: string
+                    excerpt:
+                      type: string
+    Job:
+      type: object
+      properties:
+        jobId:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+          enum:
+            - QUEUED
+            - RUNNING
+            - COMPLETED
+            - COMPLETED_WITH_ERRORS
+            - FAILED
+        total:
+          type: integer
+        processed:
+          type: integer
+        progress:
+          type: integer
+        targeted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        summary:
+          $ref: "#/components/schemas/Summary"
+        failureReason:
+          type: string
+    Results:
+      type: object
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Result"
+        totalMatched:
+          type: integer
+        nextOffset:
+          type: integer
+          nullable: true
+    Report:
+      allOf:
+        - $ref: "#/components/schemas/Summary"
+        - type: object
+          properties:
+            job:
+              $ref: "#/components/schemas/Job"
+    Export:
+      type: object
+      required:
+        - downloadUrl
+        - expiresInSeconds
+        - recordCount
+        - format
+      properties:
+        downloadUrl:
+          type: string
+          format: uri
+        expiresInSeconds:
+          type: integer
+        recordCount:
+          type: integer
+        format:
+          type: string
+          enum:
+            - csv
+            - json
+    History:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        nextCursor:
+          type: string
+          nullable: true
+    Comparison:
+      type: object
+      properties:
+        currentJobId:
+          type: string
+        baselineJobId:
+          type: string
+        current:
+          $ref: "#/components/schemas/Summary"
+        baseline:
+          $ref: "#/components/schemas/Summary"
+        analyzedChange:
+          type: integer
+        negativeRateChange:
+          type: number
+          nullable: true
+        note:
+          type: string
+    Usage:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        units:
+          type: integer
+        limit:
+          type: integer
+        unit:
+          type: string
+        resetsAt:
+          type: string
+          format: date-time
+    AlertRule:
+      type: object
+      required:
+        - enabled
+        - minRecords
+        - negativeRate
+      properties:
+        enabled:
+          type: boolean
+        minRecords:
+          type: integer
+          minimum: 1
+          maximum: 200
+        negativeRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        filters:
+          type: object
+          properties:
+            sentiment:
+              type: string
+              enum:
+                - POSITIVE
+                - NEGATIVE
+                - NEUTRAL
+                - MIXED
+            product:
+              type: string
+            source:
+              type: string
+            languageCode:
+              type: string
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+            minScore:
+              type: number
+              minimum: -1
+              maximum: 1
+            maxScore:
+              type: number
+              minimum: -1
+              maximum: 1
+            minMagnitude:
+              type: number
+              minimum: 0
+    Alerts:
+      type: object
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              jobId:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+              acknowledged:
+                type: boolean
+              type:
+                type: string
+              message:
+                type: string
+              analyzed:
+                type: integer
+              negativeRate:
+                type: number
+              threshold:
+                type: number
+              evidenceRecordIds:
+                type: array
+                items:
+                  type: string
