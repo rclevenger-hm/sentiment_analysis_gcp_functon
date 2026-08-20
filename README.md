@@ -30,3 +30,18 @@ terraform -chdir=terraform test
 
 Unit tests use signed test tokens and stateful cloud doubles; they do not need credentials or make inference calls. Build output in `artifacts/` contains the bundled entry point and locked production dependencies manifest. Cloud Build installs dependencies during deployment.
 
+## Deploy and call
+
+Follow [deployment](docs/DEPLOYMENT.md) to configure a project, remote state and GitHub workload identity federation. Deployment is manual; pushing source never provisions cloud resources.
+
+```sh
+export API_ENDPOINT='https://REGION-PROJECT.cloudfunctions.net/sentiment-dev-api'
+export GCP_IMPERSONATE_SERVICE_ACCOUNT='consumer@PROJECT.iam.gserviceaccount.com'
+# Authenticate your local Application Default Credentials first.
+npm run client -- analyze 'The service was excellent' --targeted
+npm run client -- submit examples/feedback.csv --key feedback-import-001
+npm run client -- history
+```
+
+The caller needs permission to impersonate the consumer service account. On Google Cloud, attach that account to the workload and omit the impersonation variable. See [identity](docs/IDENTITY.md) for token headers and audience requirements.
+
