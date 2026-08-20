@@ -15,3 +15,18 @@ A Node.js 24 feedback analysis service for Cloud Run functions (2nd generation).
 
 Google returns `score` (-1 to 1) and `magnitude`, not confidence probabilities. The service exposes those native values and a documented `sentence-polarity-v1` label policy. Targeted entity sentiment supports English, Spanish and Japanese. See [model differences and parity](docs/PARITY.md).
 
+## Run checks locally
+
+```sh
+npm ci
+npm run lint
+npm test
+npm audit --audit-level=moderate
+npm run build
+terraform -chdir=terraform init -backend=false -lockfile=readonly
+terraform -chdir=terraform validate
+terraform -chdir=terraform test
+```
+
+Unit tests use signed test tokens and stateful cloud doubles; they do not need credentials or make inference calls. Build output in `artifacts/` contains the bundled entry point and locked production dependencies manifest. Cloud Build installs dependencies during deployment.
+
