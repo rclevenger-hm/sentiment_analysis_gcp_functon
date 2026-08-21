@@ -45,3 +45,8 @@ npm run client -- history
 
 The caller needs permission to impersonate the consumer service account. On Google Cloud, attach that account to the workload and omit the impersonation variable. See [identity](docs/IDENTITY.md) for token headers and audience requirements.
 
+## Documentation
+
+[API](docs/API.md) · [OpenAPI](openapi.yaml) · [architecture](docs/ARCHITECTURE.md) · [parity](docs/PARITY.md) · [deployment](docs/DEPLOYMENT.md) · [operations](docs/OPERATIONS.md) · [security](docs/SECURITY.md) · [costs](docs/COSTS.md) · [integration](docs/INTEGRATION.md) · [validation](docs/VALIDATION.md)
+
+This implements the AWS baseline's application workflows with GCP-specific adapters. Model outputs are not numerically interchangeable. Cloud deployment, real IAM behavior and billable end-to-end inference require the documented post-deployment smoke test.
