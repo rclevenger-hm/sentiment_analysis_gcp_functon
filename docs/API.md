@@ -27,3 +27,11 @@ Supported document languages: `ar,de,en,es,fr,it,ja,ko,pt,zh,zh-TW,zh-Hant,nl,id
 
 A job key contains 8–128 letters, digits, dots, underscores, colons or hyphens. Reusing a key with the same normalized payload returns the existing job without charging the daily allowance again. Different payloads return 409. Reuse after expiration can return `EXPIRED_KEY` until Firestore TTL removes the record; use a fresh key.
 
+## Scores and filters
+
+Results preserve `score` and `magnitude`. `POSITIVE` requires score >= 0.25, `NEGATIVE` <= -0.25, otherwise `NEUTRAL`. A document containing both positive and negative sentences is `MIXED`, regardless of its average score. `labelPolicy` is `sentence-polarity-v1`; this is an application policy, not a Google class-confidence response.
+
+Filters are `sentiment`, `product`, `source`, `from`, `to`, `minScore`, `maxScore`, and `minMagnitude`. Date bounds are inclusive UTC dates. `minConfidence` returns 400 because Google provides no such value. History supports `status`, dates, `limit` (1–100) and `cursor`; result-specific filters apply to results, reports, exports and comparison. Result pagination uses `offset` and `limit` (1–100). Do not mix a cursor with different history filters.
+
+Targeted output contains up to 10 entities, 3 mentions per entity, native sentiment, salience, truncation indicators and excerpts. Offsets are UTF-16 code units into the original input, not Unicode code-point indices. A permanent targeted failure preserves document sentiment and sets `insightsError`.
+
