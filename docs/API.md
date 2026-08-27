@@ -35,3 +35,10 @@ Filters are `sentiment`, `product`, `source`, `from`, `to`, `minScore`, `maxScor
 
 Targeted output contains up to 10 entities, 3 mentions per entity, native sentiment, salience, truncation indicators and excerpts. Offsets are UTF-16 code units into the original input, not Unicode code-point indices. A permanent targeted failure preserves document sentiment and sets `insightsError`.
 
+## Status and failure semantics
+
+Jobs move through `QUEUED`, `RUNNING`, then `COMPLETED`, `COMPLETED_WITH_ERRORS`, or `FAILED`. Reports and result pages can be read while work continues. Comparison and export require terminal jobs. Exhausted jobs retain completed rows and synthesize errors for unprocessed rows.
+
+Application errors include `code`, `error`, `requestId`; 429 includes `Retry-After`. Platform IAM rejections may be HTML and do not use this envelope. Exports expire after 60 seconds and act as bearer links. CSV cells that could execute spreadsheet formulas are neutralized.
+
+Alert rules are a retained feed, not customer email/webhook delivery. Operational notifications are separate. Rules expire with the configured data-retention period and must be renewed.
