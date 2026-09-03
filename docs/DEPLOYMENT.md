@@ -44,3 +44,8 @@ Create protected GitHub environments `dev`, `stage`, `prod` as needed. Configure
 
 Dispatch `Deploy GCP` with the intended environment. It builds and tests, authenticates through federation, plans/applies Terraform, and checks anonymous invocation is rejected. It does not automatically run billable inference. Review plan output and environment protections before approving production deployment. Project API/IAM propagation can briefly delay a first deploy; inspect the failure before retrying.
 
+## Verify and change
+
+Run `npm run smoke` with an authorized consumer after deployment. This creates a small targeted job, verifies idempotency, partial-row handling, polling, reporting and export. It incurs cloud charges. Follow with tenant-isolation and failure drills in [validation](VALIDATION.md). Cloud mocks cannot establish live Google IAM, indexing, signed-URL or Natural Language behavior.
+
+Use CI on every change, review Terraform plans, and keep the provider/package locks. Destroy leaves the protected Firestore database behind and will not force-delete populated buckets. Removing production data safeguards requires an explicit retention/decommission decision; do not disable them just to make a test cleanup convenient.
