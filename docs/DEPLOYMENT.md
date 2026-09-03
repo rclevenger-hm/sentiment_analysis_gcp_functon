@@ -25,3 +25,22 @@ terraform -chdir=terraform output
 
 Authenticate the CLI's Application Default Credentials before Terraform. The source ZIP contains the bundle, package manifest and lockfile. Cloud Build uses the dedicated build account to install production dependencies. `gcp-build` is empty and `GOOGLE_NODE_RUN_SCRIPTS` is disabled because the artifact is already built; source build scripts are not included in the ZIP.
 
+## GitHub workflow path
+
+Create protected GitHub environments `dev`, `stage`, `prod` as needed. Configure these environment variables:
+
+| Variable | Value |
+|---|---|
+| `GCP_PROJECT_ID` | Existing billing-enabled project |
+| `GCP_REGION`, `FIRESTORE_LOCATION` | Explicit supported locations |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full federation provider resource name |
+| `GCP_DEPLOY_SERVICE_ACCOUNT` | Deployment service account email |
+| `CONSUMER_SERVICE_ACCOUNTS` | JSON array of explicit service-account emails |
+| `TF_STATE_BUCKET` | Pre-created remote-state bucket |
+| `NOTIFICATION_EMAIL` | Operator email; verify notification channel if required |
+| `BILLING_ACCOUNT_ID` | Billing account ID for budget |
+| `SERVICE_NAME` | Optional 4–12 character prefix, default `sentiment` |
+| `MONTHLY_BUDGET`, `BUDGET_CURRENCY` | Optional amount/currency, defaults 100/USD |
+
+Dispatch `Deploy GCP` with the intended environment. It builds and tests, authenticates through federation, plans/applies Terraform, and checks anonymous invocation is rejected. It does not automatically run billable inference. Review plan output and environment protections before approving production deployment. Project API/IAM propagation can briefly delay a first deploy; inspect the failure before retrying.
+
