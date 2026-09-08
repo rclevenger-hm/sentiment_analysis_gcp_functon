@@ -6,3 +6,16 @@ Cloud Run IAM restricts invocation to explicit consumer service accounts. The AP
 
 The supplied clients send the same token in `Authorization` and `X-Serverless-Authorization`. Cloud Run validates the latter; the former retains the full signature for application verification. Tokens must target the Terraform `token_audience` output, normally the canonical `cloudfunctions.net` endpoint. When calling the `run_endpoint` alias, set `TOKEN_AUDIENCE` to that canonical audience explicitly.
 
+## Workload and developer credentials
+
+On GCP, attach an allowlisted consumer service account to your workload and use Application Default Credentials to mint an audience-specific ID token. Locally, use user ADC plus `GCP_IMPERSONATE_SERVICE_ACCOUNT`; the user needs `roles/iam.serviceAccountTokenCreator` on that consumer account. The client requests `includeEmail: true` during impersonation. A pre-minted token can be supplied through `GCP_ID_TOKEN` for controlled smoke testing; never commit it.
+
+```sh
+gcloud auth application-default login
+export GCP_IMPERSONATE_SERVICE_ACCOUNT='consumer@PROJECT.iam.gserviceaccount.com'
+export API_ENDPOINT='https://REGION-PROJECT.cloudfunctions.net/sentiment-dev-api'
+npm run client -- usage
+```
+
+A human user's token alone is not a consumer credential. Distinct consumer service accounts represent distinct tenants. Two workloads using one service account share history, quotas and rules.
+
