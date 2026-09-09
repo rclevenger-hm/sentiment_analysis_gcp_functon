@@ -19,3 +19,8 @@ npm run client -- usage
 
 A human user's token alone is not a consumer credential. Distinct consumer service accounts represent distinct tenants. Two workloads using one service account share history, quotas and rules.
 
+## Infrastructure identities
+
+Worker and recovery endpoints accept only the Pub/Sub push and Scheduler service accounts respectively. Pub/Sub's service agent can mint the push identity and forward failures to the dead-letter topic. Runtime accounts have only their configured database, topic and bucket access. API export signing grants `iam.serviceAccounts.signBlob` to the API account on itself; no downloadable private key is needed.
+
+GitHub deployment uses workload identity federation into a separate deployment service account. Restrict federation by repository ID/owner and protected environment subject; do not trust arbitrary forks or every repository in the organization. See [Google service-to-service authentication](https://docs.cloud.google.com/run/docs/authenticating/service-to-service).
