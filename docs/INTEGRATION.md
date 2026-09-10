@@ -17,3 +17,8 @@ npm run client -- acknowledge JOB_ID
 
 Use [identity setup](IDENTITY.md) first. Reuse a printed idempotency key when retrying the same submission. Poll with backoff rather than repeatedly consuming the request allowance. Results can be partial until the status is terminal.
 
+## Client libraries
+
+`examples/node-client.mjs` uses the included Google-authenticated request helper. `examples/python_client.py` uses `google-auth` and `requests` with workload credentials that can mint service-account ID tokens. The JavaScript helper also supports local ADC plus impersonation. Both examples keep credentials out of source and send both platform and application authorization headers.
+
+Export links are HTTPS bearer URLs valid for 60 seconds. Download immediately, store the resulting file according to your retention policy, and do not record the link in public logs. CSV formula neutralization can prefix dangerous cells with an apostrophe; downstream consumers should preserve that protection.
