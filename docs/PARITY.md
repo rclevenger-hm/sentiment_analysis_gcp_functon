@@ -24,3 +24,10 @@ AWS baseline: `4c6bd13ea1c52ad016bba56dbf1011d832b76dad` from [sentiment_analysi
 | Deployment | Terraform and OIDC | Terraform and workload identity federation |
 | Monitoring | CloudWatch/SNS/Budget | Cloud Monitoring, email channel, project-filtered budget |
 
+## Model compatibility
+
+Google's document score is not a class probability and magnitude is not confidence. `minConfidence` is intentionally rejected. The API and CSV expose `score`, `magnitude`, and a versioned label policy instead. Positive/negative thresholds are application choices and need calibration against representative labeled feedback. They do not establish superior predictive accuracy.
+
+Entity sentiment is not Azure aspect/assessment opinion mining or AWS entity co-reference grouping. Google salience and UTF-16 mention offsets are preserved where available. Sentiment supports additional Dutch, Indonesian, Thai, Turkish and Vietnamese inputs, but excludes Hindi supported by the baseline. This is a documented compatibility gap.
+
+Reference: [Google language support](https://docs.cloud.google.com/natural-language/docs/languages), [sentiment interpretation](https://docs.cloud.google.com/natural-language/docs/basics#interpreting_sentiment_analysis_values), [entity sentiment](https://docs.cloud.google.com/natural-language/docs/analyzing-entity-sentiment).
