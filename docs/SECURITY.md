@@ -6,3 +6,9 @@ IAM-private Cloud Run endpoints use public HTTPS routing; they are not private-n
 
 Tenant-scoped keys, predicates, cursors and export paths derive from verified identity. Hash-bound pagination cursors prevent accidental filter mixing, but are not signatures or authorization credentials. Firestore runtime access remains project-wide. A compromised runtime identity can access other application tenants; isolate high-assurance tenants into separate deployments/projects if required.
 
+## Data handling
+
+Storage uses uniform bucket access and enforced public access prevention. Runtime object permissions are create/get, without delete or overwrite, and writes use `ifGenerationMatch: 0`. Firestore checkpoints fence ownership, expiry and offset in transactions. Export URLs last 60 seconds and must be treated as secrets until they expire.
+
+Validation limits body size, row count, UTF-8 bytes, languages, duplicate IDs and query bounds. The Functions Framework buffers incoming bodies before the adapter enforces its 1 MiB application limit; platform limits still apply. This is not a streaming upload service. Runtime concurrency, scale ceilings and atomic per-tenant request counters bound processing load, but do not replace infrastructure abuse controls.
+
