@@ -14,3 +14,6 @@ After deployment, run the billable smoke test with a consumer identity. Verify r
 
 Exercise a transient Natural Language error and failed publish; verify recovery eventually completes the job without duplicate committed results. Inspect Pub/Sub authenticated push and dead-letter permissions. Confirm Firestore indexes are ready, V4 URLs expire and no text/tokens appear in logs. Perform a restoration drill and confirm budget/operational notification delivery. Run these checks in a disposable nonproduction project before production rollout.
 
+## Model acceptance
+
+Use a labeled evaluation set spanning supported languages and your feedback domain. Measure native score calibration and label precision/recall, including neutral versus mixed documents and entity extraction. Pin client expectations to `labelPolicy`; changes to thresholds or model fields need an explicit compatibility review. No predictive-quality advantage over AWS/Azure is claimed from unit tests.
