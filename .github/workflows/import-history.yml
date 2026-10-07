@@ -1,0 +1,57 @@
+name: Import and validate GCP service
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/import/**'
+      - '.github/workflows/import-history.yml'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: import-service-history
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify and import complete local history
+        run: |
+          base64 --decode .github/import/history.bundle.b64 > "$RUNNER_TEMP/history.bundle"
+          echo "b71a52aa720f6671b247b03accfa7cdb58bc42b43b1389a5bee0a3be79a43d4c  $RUNNER_TEMP/history.bundle" | sha256sum --check
+          git bundle verify "$RUNNER_TEMP/history.bundle"
+          git fetch "$RUNNER_TEMP/history.bundle" main:refs/heads/imported-history
+          test "$(git rev-parse imported-history)" = 0fcebe3ddbd657db628c224865f5f0aa9a65b9a2
+          test "$(git rev-parse imported-history^{tree})" = 78b0a791c6c67623448fee7dc20848bb83770c2a
+          git checkout imported-history
+          git config user.name 'Roger Clevenger'
+          git config user.email '70983614+rclevenger-hm@users.noreply.github.com'
+          git merge --allow-unrelated-histories -s ours --no-commit origin/main
+          git restore --source=origin/main -- .github/workflows/import-history.yml .github/import/history.bundle.b64
+          git add .github/workflows/import-history.yml .github/import/history.bundle.b64
+          git commit -m 'Import GCP sentiment service history'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint && npm test && npm run build
+      - run: npm audit --audit-level=moderate
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.5
+      - run: terraform -chdir=terraform fmt -check -recursive
+      - run: terraform -chdir=terraform init -backend=false -input=false -lockfile=readonly
+      - run: terraform -chdir=terraform validate
+      - run: terraform -chdir=terraform test
+      - name: Publish validated history without force
+        run: git push origin HEAD:main
+      - name: Run ordinary CI on the published default branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({owner: context.repo.owner, repo: context.repo.repo, workflow_id: 'ci.yml', ref: 'main'});
