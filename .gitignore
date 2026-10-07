@@ -1,0 +1,15 @@
+node_modules/
+dist/
+artifacts/
+coverage/
+.env
+.terraform/
+*.tfstate*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+*.zip
+gha-creds-*.json
+.env.*
+!.env.example
+.terraform.tfstate.lock.info

@@ -1,0 +1,39 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { createWorker, message } = require('../src/worker');
+const { fixture, event } = require('./helpers');
+const { tenantFrom } = require('../src/input');
+test('queue messages require bounded hashed owner and job identifiers', () => {
+  for (const value of [null, {}, '{bad', { tenantId: '../escape', jobId: 'a'.repeat(64) }]) assert.throws(() => message(value));
+  assert.deepEqual(message(JSON.stringify({ tenantId: 'a'.repeat(64), jobId: 'b'.repeat(64) })), { tenantId: 'a'.repeat(64), jobId: 'b'.repeat(64) });
+});
+test('failed enqueue leaves durable job available for idempotent resubmission', async () => {
+  const f = fixture(); const enqueue = f.store.enqueue; f.store.enqueue = async () => { throw new Error('queue unavailable'); };
+  const request = event('POST', '/jobs', { records: [{ text: 'good' }] });
+  assert.equal((await f.api(request)).statusCode, 503);
+  f.store.enqueue = enqueue;
+  assert.equal((await f.api(request)).statusCode, 202);
+  assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
+  await f.tick(); assert.equal(f.calls.length, 1);
+});
+test('failed final checkpoint never publishes an alert independently', async () => {
+  const f = fixture(); await f.api(event('PUT', '/alert-rule', { enabled: true, minRecords: 1, negativeRate: 0.5 }));
+  await f.api(event('POST', '/jobs', { records: [{ text: 'bad' }] }));
+  f.store.checkpoint = async () => { throw new Error('transaction failed'); };
+  await assert.rejects(f.tick(), /transaction failed/);
+  const response = await f.api(event('GET', '/alerts')); assert.equal(JSON.parse(response.body).alerts.length, 0);
+});
+test('recovery resumes saved cursor and bounds each timer execution', async () => {
+  const scanned = [], saved = []; let count = 0;
+  const worker = createWorker({ store: { async claimRecovery() { return { cursor: 'resume', leaseToken: 'owner' }; }, async recover(cursor) { scanned.push(cursor); return `page-${++count}`; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
+  await worker.recover(); assert.equal(scanned[0], 'resume'); assert.equal(scanned.length, 20); assert.equal(saved.at(-1), 'page-20');
+});
+test('completed recovery scan clears cursor for the next full pass', async () => {
+  const saved = []; const worker = createWorker({ store: { async claimRecovery() { return { cursor: null, leaseToken: 'owner' }; }, async recover() { return undefined; }, async saveRecoveryCursor(cursor) { saved.push(cursor); } }, analyzer: {} });
+  await worker.recover(); assert.deepEqual(saved, [undefined, undefined]);
+});
+test('request rate rejection returns a minute rather than daily Retry-After', async () => {
+  const f = fixture(); const { HttpError } = require('../src/input'); f.store.reserveRequest = async () => { throw new HttpError(429, 'RATE_LIMIT_EXCEEDED', 'Rate limited'); };
+  const response = await f.api(event('GET', '/usage')); assert.equal(response.statusCode, 429); assert.equal(response.headers['retry-after'], '60');
+});

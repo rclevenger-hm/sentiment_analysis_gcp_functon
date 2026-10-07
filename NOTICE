@@ -1,0 +1,13 @@
+Google Cloud Sentiment Analysis Service
+Copyright (c) 2026 Roger Clevenger
+
+Domain validation, reporting, routing and behavioral tests are adapted from
+Roger Clevenger's MIT-licensed sentiment_analysis_lambda and
+sentiment_analysis_functon repositories. Full baseline SHAs are in docs/PARITY.md.
+The original MIT license and copyright notice are retained in LICENSE.
+
+Google identity verification, Cloud Natural Language, Firestore, Cloud Storage,
+Pub/Sub, Cloud Run functions and GCP deployment adapters are implemented here.
+
+The April–September 2026 commit timeline was reconstructed during the October
+2026 port. Its assigned timestamps are not evidence of when the work occurred.

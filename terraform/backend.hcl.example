@@ -1,0 +1,2 @@
+bucket = "YOUR_PRIVATE_VERSIONED_STATE_BUCKET"
+prefix = "sentiment/dev"
