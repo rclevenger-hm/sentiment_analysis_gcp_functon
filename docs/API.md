@@ -33,6 +33,8 @@ Results preserve `score` and `magnitude`. `POSITIVE` requires score >= 0.25, `NE
 
 Filters are `sentiment`, `product`, `source`, `from`, `to`, `minScore`, `maxScore`, and `minMagnitude`. Date bounds are inclusive UTC dates. `minConfidence` returns 400 because Google provides no such value. History supports `status`, dates, `limit` (1–100) and `cursor`; result-specific filters apply to results, reports, exports and comparison. Result pagination uses `offset` and `limit` (1–100). Do not mix a cursor with different history filters.
 
+Numeric filters require finite values: scores range from -1 to 1, magnitude is nonnegative, and `minScore` cannot exceed `maxScore`. URL queries accept decimal numbers (including exponent notation); blank values are rejected. JSON alert-rule filters require numbers, not numeric strings, null, booleans or arrays. Omit an unused filter instead of sending null. Invalid rule updates return 400 without replacing the saved rule.
+
 Targeted output contains up to 10 entities, 3 mentions per entity, native sentiment, salience, truncation indicators and excerpts. Offsets are UTF-16 code units into the original input, not Unicode code-point indices. A permanent targeted failure preserves document sentiment and sets `insightsError`.
 
 ## Status and failure semantics
