@@ -125,3 +125,40 @@ test('a duplicate racing with the last available quota unit still returns its ex
   assert.equal(duplicate.statusCode, 202); assert.equal(parsed(duplicate).jobId, first.jobId);
   assert.equal((await f.store.usage(tenantFrom(request))).units, 1);
 });
+
+test('invalid numeric alert filters cannot overwrite a saved rule', async () => {
+  const f = fixture();
+  const saved = { enabled: true, minRecords: 1, negativeRate: 0.5, filters: { minScore: -1, maxScore: 0, minMagnitude: 0 } };
+  assert.equal((await f.api(event('PUT', '/alert-rule', saved))).statusCode, 200);
+  for (const key of ['minScore', 'maxScore', 'minMagnitude']) {
+    for (const value of [null, false, true, [], [0], {}, '', ' ', '0.5']) {
+      const response = await f.api(event('PUT', '/alert-rule', { ...saved, filters: { [key]: value } }));
+      assert.equal(response.statusCode, 400, `${key}: ${JSON.stringify(value)}`);
+      assert.equal(parsed(response).code, 'INVALID_REQUEST');
+      assert.deepEqual(parsed(await f.api(event('GET', '/alert-rule'))), saved);
+    }
+  }
+  const job = parsed(await f.api(event('POST', '/jobs', { records: [{ id: 'negative-review', text: 'bad' }] })));
+  await f.tick();
+  const alerts = parsed(await f.api(event('GET', '/alerts'))).alerts;
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].jobId, job.jobId);
+  assert.deepEqual(alerts[0].evidenceRecordIds, ['negative-review']);
+});
+
+test('report routes reject blank numeric queries and retain valid score filtering', async () => {
+  const f = fixture();
+  const job = parsed(await f.api(event('POST', '/jobs', { records: [{ id: 'bad', text: 'bad' }, { id: 'good', text: 'good' }] })));
+  await f.tick();
+  const routes = [`/jobs/${job.jobId}/results`, `/jobs/${job.jobId}/report`, `/jobs/${job.jobId}/export`, '/compare'];
+  for (const path of routes) {
+    for (const key of ['minScore', 'maxScore', 'minMagnitude']) {
+      const response = await f.api(event('GET', path, undefined, { queryStringParameters: { current: job.jobId, baseline: job.jobId, [key]: ' ' } }));
+      assert.equal(response.statusCode, 400, `${path}: ${key}`);
+      assert.equal(parsed(response).code, 'INVALID_REQUEST');
+    }
+  }
+  const filtered = parsed(await f.api(event('GET', routes[0], undefined, { queryStringParameters: { minScore: '-1', maxScore: '0', minMagnitude: '0' } })));
+  assert.equal(filtered.totalMatched, 1);
+  assert.deepEqual(filtered.records.map((record) => record.id), ['bad']);
+});

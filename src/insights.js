@@ -3,7 +3,7 @@
 const { invalid, dateOnly, object } = require('./input');
 const SENTIMENTS = new Set(['POSITIVE', 'NEGATIVE', 'NEUTRAL', 'MIXED']);
 
-function filtersFrom(query = {}) {
+function filtersFrom(query = {}, { allowNumericStrings = true } = {}) {
   const filters = {};
   if (query.sentiment !== undefined) {
     if (!SENTIMENTS.has(query.sentiment)) throw invalid('Invalid sentiment filter');
@@ -17,8 +17,12 @@ function filtersFrom(query = {}) {
   if (filters.from && filters.to && filters.from > filters.to) throw invalid('from must be before to');
   if (query.minConfidence !== undefined) throw invalid('Google sentiment does not provide confidence; use minScore, maxScore or minMagnitude');
   for (const key of ['minScore', 'maxScore', 'minMagnitude']) if (query[key] !== undefined) {
-    const value = Number(query[key]);
-    if (query[key] === '' || !Number.isFinite(value) || (key === 'minMagnitude' ? value < 0 : value < -1 || value > 1)) throw invalid(`Invalid ${key}`);
+    const raw = query[key];
+    // URL parameters are strings; JSON alert rules must contain actual numbers.
+    const numericString = allowNumericStrings && typeof raw === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(raw.trim());
+    if (typeof raw !== 'number' && !numericString) throw invalid(`Invalid ${key}`);
+    const value = Number(raw);
+    if (!Number.isFinite(value) || (key === 'minMagnitude' ? value < 0 : value < -1 || value > 1)) throw invalid(`Invalid ${key}`);
     filters[key] = value;
   }
   if (filters.minScore !== undefined && filters.maxScore !== undefined && filters.minScore > filters.maxScore) throw invalid('minScore must be at most maxScore');
@@ -92,7 +96,7 @@ function validateRule(value) {
   if (!Number.isInteger(value.minRecords) || value.minRecords < 1 || value.minRecords > 200) throw invalid('minRecords must be between 1 and 200');
   if (typeof value.negativeRate !== 'number' || !Number.isFinite(value.negativeRate) || value.negativeRate < 0 || value.negativeRate > 1) throw invalid('negativeRate must be between 0 and 1');
   return { enabled: value.enabled, minRecords: value.minRecords, negativeRate: value.negativeRate,
-    filters: filtersFrom(value.filters || {}) };
+    filters: filtersFrom(value.filters || {}, { allowNumericStrings: false }) };
 }
 
 function evaluateRule(rule, records, fallbackDate) {
