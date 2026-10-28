@@ -23,7 +23,7 @@
     "@google-cloud/pubsub": "6.2.0",
     "@google-cloud/storage": "8.4.0",
     "google-auth-library": "11.2.0",
-    "jose": "6.2.12"
+    "jose": "6.2.13"
   },
   "devDependencies": {
     "acorn": "8.19.0",
